@@ -1,4 +1,0 @@
-// EL PACKAGE.JSON ES SOLO UN PLACEHOLDER PARA QUE DOCKER FUNCIONE, REEMPLAZAR CUANDO SE CREE EL PRYECTO
-
-console.log("Frontend placeholder running");
-setInterval(()=>{},1000);
