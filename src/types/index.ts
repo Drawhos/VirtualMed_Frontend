@@ -1,16 +1,5 @@
-export enum UserRole {
-  PATIENT = 'Patient',
-  DOCTOR = 'Doctor',
-  ADMIN = 'Admin',
-  FAMILY_MEMBER = 'FamilyMember'
-}
-
-export enum IdentificationType {
-  TI = 'TI',
-  CC = 'CC',
-  CE = 'CE',
-  PASSPORT = 'Passport',
-}
+import { UserRole } from "../constants/userRole";
+import { IdentificationType } from "../constants/identificationType";
 
 export interface User {
   id: string;
@@ -86,4 +75,17 @@ export interface AuthResponse {
   refreshToken: string;
   user: User;
   requiresTwoFactor?: boolean;
+}
+
+export interface DoctorRegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  professionalLicense: string;
+  specialty: string;
+  supportingDocument: File | null;
+}
+
+export interface DoctorResponse {
+  doctorId: string;
 }

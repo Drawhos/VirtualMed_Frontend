@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { User, ShieldCheck, UploadCloud, Info } from "lucide-react";
-import { API_ROUTES } from "@/config/api";
+import { authService } from "@/lib/api/auth.service";
 import { MEDICAL_SPECIALTIES } from "@/constants/specialties";
+import { DoctorRegisterRequest } from "@/types";
 
 export default function DoctorRegistrationForm() {
     const [file, setFile] = useState<File | null>(null);
@@ -60,26 +61,17 @@ export default function DoctorRegistrationForm() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        const submitFormData = new FormData(e.currentTarget);
-
-        if (file) {
-            submitFormData.append("SupportingDocument", file);
-        }
-        console.log(API_ROUTES.AUTH.DOCTOR_REGISTER);
-
         try {
-            const response = await fetch(
-                API_ROUTES.AUTH.DOCTOR_REGISTER,
-                {
-                    method: "POST",
-                    body: submitFormData,
-                }
-            );
+            const doctorData: DoctorRegisterRequest = {
+                fullName: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                professionalLicense: formData.professionalLicense,
+                specialty: formData.specialty,
+                supportingDocument: file,
+            };
 
-            if (!response.ok) {
-                throw new Error("Error al registrar doctor");
-            }
-
+            await authService.registerDoctor(doctorData);
             setIsSubmitted(true);
         } catch (error) {
             alert("Error al registrar doctor. Por favor, intenta de nuevo.");

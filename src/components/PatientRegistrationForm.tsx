@@ -9,7 +9,7 @@ import Link from "next/link";
 import { isAxiosError } from "axios";
 import { Eye, EyeOff } from "lucide-react";
 
-import { IdentificationType } from "@/types";
+import { IdentificationType } from "@/constants/identificationType";
 import { authService } from "@/lib/api/auth.service";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -288,6 +288,7 @@ export default function PatientRegistrationForm() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     className="[&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                    placeholder="Min 8 caracteres"
                     {...field}
                     onChange={(e) => {
                       field.onChange(e);
