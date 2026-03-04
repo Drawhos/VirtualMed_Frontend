@@ -1,7 +1,7 @@
 // src/lib/api/axios.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7018/api';
 
 // Crear instancia de Axios
 export const apiClient = axios.create({
