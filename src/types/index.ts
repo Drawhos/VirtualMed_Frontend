@@ -1,12 +1,9 @@
-export enum UserRole {
-  PATIENT = 'Patient',
-  DOCTOR = 'Doctor',
-  ADMIN = 'Admin',
-  FAMILY_MEMBER = 'FamilyMember'
-}
+import { UserRole } from "../constants/userRole";
+import { IdentificationType } from "../constants/identificationType";
 
 export interface User {
   id: string;
+  documentNumber: string;
   email: string;
   emailVerified: boolean;
   firstName: string;
@@ -23,7 +20,6 @@ export interface User {
 // PATIENT TYPES
 // ============================================
 export interface Patient extends User {
-  document: string;
   dateOfBirth: string;
   gender: string;
   bloodType?: string;
@@ -49,4 +45,47 @@ export interface Doctor extends User {
   rating?: number;
   totalConsultations?: number;
   verified: boolean;
+}
+
+// ============================================
+// AUTH TYPES
+// ============================================
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface PatientRegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  identificationType: IdentificationType | undefined;
+  documentNumber: string;
+  dateOfBirth: string;
+  gender: "male" | "female" | "other";
+  phoneNumber?: string;
+  acceptPrivacy: boolean;
+  authorizeData: boolean;
+}
+
+export interface AuthResponse {
+  token: string;
+  refreshToken: string;
+  user: User;
+  requiresTwoFactor?: boolean;
+}
+
+export interface DoctorRegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  professionalLicense: string;
+  specialty: string;
+  supportingDocument: File | null;
+}
+
+export interface DoctorResponse {
+  doctorId: string;
 }
