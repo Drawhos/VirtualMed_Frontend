@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   twoFactorEnabled: boolean;
   phoneNumber?: string;
+  status: "active" | "inactive" | "pending";
   createdAt: string;
   updatedAt: string;
 }
