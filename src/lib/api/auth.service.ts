@@ -14,10 +14,10 @@ export const authService = {
   },
 
   registerDoctor: async (data: DoctorRegisterRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>("/auth/register/doctor", data);
+    const response = await CreateFormData(data);
     return response.data;
   },
-
+  
   getDoctor: async (doctorId: string): Promise<DoctorResponse> => {
     const response = await apiClient.get<DoctorResponse>(`/doctors/${doctorId}`);
     return response.data;
@@ -28,3 +28,26 @@ export const authService = {
     localStorage.removeItem('refreshToken');
   },
 };
+
+// Construir FormData para registro de doctor con archivo adjunto
+async function CreateFormData(data: DoctorRegisterRequest) {
+  const formData = new FormData();
+  formData.append('fullName', data.fullName);
+  formData.append('email', data.email);
+  formData.append('password', data.password);
+  formData.append('professionalLicense', data.professionalLicense);
+  formData.append('specialty', data.specialty);
+  if (data.supportingDocument) {
+    formData.append('supportingDocument', data.supportingDocument);
+  }
+  const response = await apiClient.post<AuthResponse>(
+    '/auth/register/doctor',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response;
+}
