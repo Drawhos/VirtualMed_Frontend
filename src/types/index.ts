@@ -89,3 +89,16 @@ export interface DoctorRegisterRequest {
 export interface DoctorResponse {
   doctorId: string;
 }
+
+// ============================================
+// 2FA TYPES
+// ============================================
+export interface Enable2FAResponse {
+  otpauthUri: string;
+  secret: string;
+  recoveryCodes: string[];
+}
+
+export interface Verify2FARequest {
+  code: string;
+}

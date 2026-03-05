@@ -1,6 +1,6 @@
 // src/lib/api/auth.service.ts
 import apiClient from './axios';
-import { AuthResponse, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest } from '@/types';
+import { AuthResponse, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest, Enable2FAResponse, Verify2FARequest } from '@/types';
 
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
@@ -17,7 +17,7 @@ export const authService = {
     const response = await CreateFormData(data);
     return response.data;
   },
-  
+
   getDoctor: async (doctorId: string): Promise<DoctorResponse> => {
     const response = await apiClient.get<DoctorResponse>(`/doctors/${doctorId}`);
     return response.data;
@@ -26,6 +26,16 @@ export const authService = {
     await apiClient.post('/auth/logout');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+  },
+  enable2FA: async (): Promise<Enable2FAResponse> => {
+    const response = await apiClient.post<Enable2FAResponse>(
+      '/auth/2fa/enable'
+    );
+    return response.data;
+  },
+
+  verify2FA: async (data: Verify2FARequest): Promise<void> => {
+    await apiClient.post('/auth/2fa/verify', data);
   },
 };
 
