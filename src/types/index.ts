@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   twoFactorEnabled: boolean;
   phoneNumber?: string;
+  status: "active" | "inactive" | "pending";
   createdAt: string;
   updatedAt: string;
 }
@@ -56,13 +57,12 @@ export interface LoginRequest {
 }
 
 export interface PatientRegisterRequest {
-  firstName: string;
-  lastName: string;
+  fullname: string;
   email: string;
   password: string;
   confirmPassword: string;
   identificationType: IdentificationType | undefined;
-  documentNumber: string;
+  document: string;
   dateOfBirth: string;
   gender: "male" | "female" | "other";
   phoneNumber?: string;
@@ -71,10 +71,14 @@ export interface PatientRegisterRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
-  user: User;
-  requiresTwoFactor?: boolean;
+  expiresInSeconds: number;
+}
+
+export interface AuthResponseWith2FA {
+  requiresTwoFactor: boolean;
+  tempTwoFactorToken: string;
 }
 
 export interface DoctorRegisterRequest {

@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { normalizeSpaces } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -78,6 +79,18 @@ const DOC_RULES: Record<
 };
 
 // ---------------------------------------------------------------------------
+// User Errors
+// ---------------------------------------------------------------------------
+
+const FIELD_ERRORS: Record<string, { field: keyof PatientRegistrationFormValues; message: string }> = {
+  "Email already exists.":            { field: "email",    message: "Este correo ya está registrado." },
+  "Document number already exists.":  { field: "document", message: "Este documento ya está registrado." },
+  "Full name is required.":           { field: "firstName", message: "El nombre completo es obligatorio." },
+  "Full name must not exceed 100 characters.": { field: "firstName", message: "El nombre no puede exceder 100 caracteres." },
+  "Passwords do not match.":          { field: "confirmPassword", message: "Las contraseñas no coinciden." },
+};
+
+// ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
 
@@ -85,13 +98,12 @@ const patientRegistrationSchema = z
   .object({
     email: z.string().email({ message: "Correo inválido" }),
     password: z
-      .string()
-      .min(8, { message: "La contraseña debe tener al menos 8 caracteres" }),
+      .string(),
     confirmPassword: z.string(),
     firstName: z.string().min(1, { message: "Obligatorio" }),
     lastName: z.string().min(1, { message: "Obligatorio" }),
     identificationType: z.nativeEnum(IdentificationType).optional(),
-    documentNumber: z.string(),
+    document: z.string(),
     dateOfBirth: z
       .string()
       .min(1, { message: "Obligatorio" })
@@ -112,6 +124,31 @@ const patientRegistrationSchema = z
       message: "Debes autorizar el tratamiento de datos",
     }),
   }).superRefine((data, ctx) => {
+    // Password requirements — combine all errors into one message
+    if (data.password) {
+      const errors: string[] = [];
+      if (data.password.length < 8) {
+        errors.push("8 caracteres");
+      }
+      if (!/[A-Z]/.test(data.password)) {
+        errors.push("mayúscula");
+      }
+      if (!/[a-z]/.test(data.password)) {
+        errors.push("minúscula");
+      }
+      if (!/[0-9]/.test(data.password)) {
+        errors.push("1 dígito");
+      }
+
+      if (errors.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["password"],
+          message: `La contraseña debe contener: ${errors.join(", ")}`
+        });
+      }
+    }
+
     // Password confirmation
     if (data.password !== data.confirmPassword) {
       ctx.addIssue({
@@ -123,12 +160,12 @@ const patientRegistrationSchema = z
 
     // Document number — only validated when a type is selected
     if (data.identificationType) {
-      const docNumber = data.documentNumber ?? "";
+      const docNumber = data.document ?? "";
 
       if (!docNumber) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ["documentNumber"],
+          path: ["document"],
           message: "Obligatorio",
         });
         return; // no need to check pattern if empty
@@ -138,7 +175,7 @@ const patientRegistrationSchema = z
       if (rule && !rule.pattern.test(docNumber)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ["documentNumber"],
+          path: ["document"],
           message: rule.message,
         });
       }
@@ -164,7 +201,7 @@ export default function PatientRegistrationForm() {
       firstName: "",
       lastName: "",
       identificationType: undefined,
-      documentNumber: "",
+      document: "",
       dateOfBirth: "",
       gender: "male",
       phoneNumber: "",
@@ -188,11 +225,10 @@ export default function PatientRegistrationForm() {
         email: values.email,
         password: values.password,
         confirmPassword: values.confirmPassword,
-        firstName: values.firstName,
-        lastName: values.lastName,
+        fullname: values.firstName + " " + values.lastName,
         identificationType: values.identificationType,
         phoneNumber: values.phoneNumber,
-        documentNumber: values.documentNumber,
+        document: values.document,
         dateOfBirth: values.dateOfBirth,
         gender: values.gender,
         acceptPrivacy: values.acceptPrivacy,
@@ -205,50 +241,53 @@ export default function PatientRegistrationForm() {
       });
       router.push("/login");
     } catch (err: unknown) {
-      console.error(err);
-
-      // Type-safe Axios error handling
       if (isAxiosError(err)) {
-        const responseData = err.response?.data;
-        const message: string =
-          typeof responseData?.message === "string"
-            ? responseData.message
-            : "Error desconocido";
+        const status = err.response?.status;
 
-        // Propagate field-level errors returned by the API
-        const errors = responseData?.errors;
-        if (Array.isArray(errors)) {
-          errors.forEach((e: unknown) => {
-            if (
-              e &&
-              typeof e === "object" &&
-              "field" in e &&
-              "message" in e &&
-              typeof (e as Record<string, unknown>).field === "string" &&
-              typeof (e as Record<string, unknown>).message === "string"
-            ) {
-              form.setError(
-                (e as { field: string }).field as keyof PatientRegistrationFormValues,
-                { message: (e as { message: string }).message }
-              );
-            }
-          });
+        // ── Errores de usuario (validación) ──────────────────────────────
+        if (status === 400 || status === 422) {
+          const errors = err.response?.data?.errors;
+
+          if (Array.isArray(errors) && errors.length > 0) {
+            errors.forEach((e: { field?: string; message?: string }) => {
+              // Intentar mapear a campo conocido desde FIELD_ERRORS
+              const mapped = e.message ? FIELD_ERRORS[e.message] : undefined;
+
+              if (mapped) {
+                form.setError(mapped.field, { message: mapped.message });
+              } else if (e.field) {
+                // Propagar el error de campo tal como viene si no está mapeado
+                form.setError(
+                  e.field as keyof PatientRegistrationFormValues,
+                  { message: e.message ?? "Error de validación" }
+                );
+              }
+            });
+
+            toast({
+              title: "Revisa el formulario",
+              description: "Hay campos con errores que debes corregir.",
+              variant: "destructive",
+            });
+          } else {
+            // 400/422 sin array de errores — mensaje genérico de validación
+            toast({
+              title: "Datos inválidos",
+              description: err.response?.data?.message ?? "Revisa los campos e intenta de nuevo.",
+              variant: "destructive",
+            });
+          }
+          return;
         }
 
+        // ── Errores de backend / infraestructura ─────────────────────────
         toast({
-          title: "Error al registrar",
-          description: message,
+          title: "Error en el servidor",
+          description: "Ocurrió un problema inesperado. Intenta de nuevo más tarde.",
           variant: "destructive",
         });
         return;
       }
-
-      // Non-Axios / unexpected errors
-      toast({
-        title: "Error al registrar",
-        description: "Ocurrió un error inesperado. Intenta de nuevo.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -353,7 +392,12 @@ export default function PatientRegistrationForm() {
               <FormItem>
                 <FormLabel htmlFor="firstName">Nombre</FormLabel>
                 <FormControl>
-                  <Input id="firstName" {...field} />
+                  <Input id="firstName" {...field}
+                  onBlur={(e) => {
+                    field.onChange(normalizeSpaces(e.target.value));
+                    field.onBlur();
+                  }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -367,7 +411,12 @@ export default function PatientRegistrationForm() {
               <FormItem>
                 <FormLabel htmlFor="lastName">Apellido</FormLabel>
                 <FormControl>
-                  <Input id="lastName" {...field} />
+                  <Input id="lastName" {...field} 
+                  onBlur={(e) => {
+                    field.onChange(normalizeSpaces(e.target.value));
+                    field.onBlur();
+                  }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -413,13 +462,13 @@ export default function PatientRegistrationForm() {
         {/* Document number — disabled until a type is selected */}
         <FormField
           control={form.control}
-          name="documentNumber"
+          name="document"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="documentNumber">Número de documento</FormLabel>
+              <FormLabel htmlFor="document">Número de documento</FormLabel>
               <FormControl>
                 <Input
-                  id="documentNumber"
+                  id="document"
                   {...field}
                   disabled={!identificationType}
                   placeholder={
