@@ -71,7 +71,7 @@ export interface PatientRegisterRequest {
 }
 
 export interface AuthResponse {
-  accesstoken: string;
+  accessToken: string;
   refreshToken: string;
   expiresInSeconds: number;
 }
