@@ -89,15 +89,12 @@ export const LoginForm = () => {
         
         // Guardar token en el estado global y localStorage
         setToken(token);
-        localStorage.setItem('token', response.accessToken);
 
         // Extraer status y role del token
         const userStatus = decodedToken.status;
         const userRole = decodedToken.role;
         const fullname = decodedToken.fullname
         
-        console.log("Decoded token:", userStatus, userRole, fullname);
-
         // Verificar si el usuario está inactivo
         if (userStatus === "inactive") {
           toast({
@@ -115,7 +112,7 @@ export const LoginForm = () => {
           });
             // Redirigir según el rol
           const redirectPath =
-          userRole === "Doctor" ? "/doctor/dashboard" : "/patient/dashboard";
+          userRole === "Doctor" ? "/dashboard/doctor" : "/dashboard/patient";
           router.push(redirectPath);
           
           // Guardar refreshToken

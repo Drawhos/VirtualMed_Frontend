@@ -2,19 +2,25 @@ import { UserRole } from "../constants/userRole";
 import { IdentificationType } from "../constants/identificationType";
 
 export interface User {
-  id: string;
-  documentNumber: string;
+  sub: string;
   email: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
-  password: string;
   role: UserRole;
-  twoFactorEnabled: boolean;
+  fullname: string;
+  status: "Active" | "Pending";
+  email_verified: boolean;
+  two_factor_enabled: boolean;
+  permission: string[];
+  // Legacy fields for compatibility
+  id?: string;
+  documentNumber?: string;
+  emailVerified?: boolean;
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+  twoFactorEnabled?: boolean;
   phoneNumber?: string;
-  status: "active" | "inactive" | "pending";
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ============================================
