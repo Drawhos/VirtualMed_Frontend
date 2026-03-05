@@ -65,22 +65,21 @@ export const LoginForm = () => {
       });
 
       // Verificar si el usuario está inactivo
-      if (response.user.status === "inactive") {
-        toast({
-          title: "Cuenta Inactiva",
-          description: "Tu cuenta está inactiva. Por favor contacta con soporte.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+      // if (response.user.status === "inactive") {
+      //   toast({
+      //     title: "Cuenta Inactiva",
+      //     description: "Tu cuenta está inactiva. Por favor contacta con soporte.",
+      //     variant: "destructive",
+      //   });
+      //   setIsLoading(false);
+      //   return;
+      // }
 
-      // Guardar token y usuario en el store
-      setToken(response.token);
-      setUser(response.user);
+      // Guardar usuario en el store
+      // setUser(response.user);
 
       // Guardar refreshToken
-      if (response.refreshToken) {
+      if ('refreshToken' in response && response.refreshToken) {
         localStorage.setItem("refreshToken", response.refreshToken);
       }
 
@@ -91,22 +90,27 @@ export const LoginForm = () => {
         localStorage.removeItem("rememberEmail");
       }
 
-      toast({
-        title: "Bienvenido",
-        description: `Hola ${response.user.firstName}, iniciaste sesión exitosamente.`,
-        variant: "default",
-      });
+      // toast({
+      //   title: "Bienvenido",
+      //   description: `Hola ${response.user.firstName}, iniciaste sesión exitosamente.`,
+      //   variant: "default",
+      // });
 
       // Verificar si requiere 2FA
-      if (response.requiresTwoFactor) {
-        router.push("/auth/2fa/");
-        return;
+      if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
+        // Ir a pantalla de 2FA con response.tempTwoFactorToken
+        router.push("/verify-2fa");
+      }
+      // Login normal con response.accesstoken
+      if ('accesstoken' in response  && response.accesstoken) {
+        localStorage.setItem('token', response.accesstoken);
+        router.push("/login");
       }
 
       // Redirigir según el rol
-      const redirectPath =
-        response.user.role === "Doctor" ? "/doctor/dashboard" : "/patient/dashboard";
-      router.push(redirectPath);
+      // const redirectPath =
+      //   response.user.role === "Doctor" ? "/doctor/dashboard" : "/patient/dashboard";
+      // router.push(redirectPath);
     } catch (error) {
       let errorMessage = "No pudimos iniciar sesión. Intenta de nuevo.";
 
