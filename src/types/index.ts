@@ -6,7 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   fullname: string;
-  status: "Active" | "Pending";
+  status: "Active" | "Pending" | "Inactive";
   email_verified: boolean;
   two_factor_enabled: boolean;
   permission: string[];

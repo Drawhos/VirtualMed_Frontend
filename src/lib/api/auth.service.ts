@@ -1,4 +1,5 @@
 // src/lib/api/auth.service.ts
+import { useAuthStore } from '@/store/auth.store';
 import apiClient from './axios';
 import { AuthResponse, AuthResponseWith2FA, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest, Enable2FAResponse, Verify2FARequest } from '@/types';
 
@@ -23,10 +24,12 @@ export const authService = {
     return response.data;
   },
   logout: async (): Promise<void> => {
-    await apiClient.post('/auth/logout');
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-  },
+      try {
+        await apiClient.post('/auth/logout');
+      } finally {
+        useAuthStore.getState().logout();
+      }
+    },
   enable2FA: async (): Promise<Enable2FAResponse> => {
     const response = await apiClient.post<Enable2FAResponse>(
       '/auth/2fa/enable'

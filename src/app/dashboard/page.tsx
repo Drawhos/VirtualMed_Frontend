@@ -5,47 +5,34 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { UserRole } from '@/constants/userRole';
 import { Skeleton } from '@/components/ui/skeleton';
-import { decodeToken } from '@/lib/auth-utils';
-import { toast } from '@/hooks/use-toast';
+import { getCookie } from '@/lib/auth-utils';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { token, isLoading } = useAuthStore();
+  const { user, isLoading, _hasHydrated } = useAuthStore();
+  const hasToken = !!getCookie('token');
 
   useEffect(() => {
-
-    // If no user is authenticated, redirect to login
-    if (!token) {
+    if (!_hasHydrated) return; // Esperar hidratación
+    if (!hasToken || !user) {
       router.push('/login');
       return;
     }
 
-    // Decode token to get user role and status
-    const decodedToken = decodeToken(token);
-    if (!decodedToken) {
-      let errorMessage = "Parece que tu sesión ha expirado. Por favor, inicia sesión nuevamente.";
-      toast({
-        title: "Inicia sesión nuevamente",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      router.push('/login');
-      return;
+    switch (user.role) {
+      case UserRole.DOCTOR:
+        router.push('/dashboard/doctor');
+        break;
+      case UserRole.PATIENT:
+        router.push('/dashboard/patient');
+        break;
+      default:
+        // Fallback para otros roles (Admin, FamilyMember, etc.)
+        router.push('/login');
     }
+  }, [user, isLoading, hasToken, router]);
 
-    // Redirect to role-specific dashboard
-    if (decodedToken.role === UserRole.DOCTOR) {
-      router.push('/dashboard/doctor');
-    } else if (decodedToken.role === UserRole.PATIENT) {
-      router.push('/dashboard/patient');
-    } else {
-      // Fallback for other roles (Admin, FamilyMember, etc.)
-      router.push('/dashboard/doctor');
-    }
-  }, [token, isLoading, router]);
-
-  // Show loading state while checking authentication
-  if (isLoading || !token) {
+  if (isLoading || !hasToken || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="w-full max-w-md space-y-4 px-6">

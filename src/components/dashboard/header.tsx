@@ -12,10 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { decodeToken } from '@/lib/auth-utils';
 
 export function Header() {
-  const { token, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -23,30 +22,16 @@ export function Header() {
     router.push('/login');
   };
 
-  if (!token) {
-    return null;
-  }
+  if (!user) return null;
 
-  const decodedToken = decodeToken(token);
-  if (!decodedToken) {
-    logout();
-    router.push('/login');
-    return null;
-  }
-  const fullname = decodedToken.fullname || "Usuario";
-  const email = decodedToken.email || "";
-  const role = decodedToken.role || "Rol desconocido";
-  const status = decodedToken.status || "Sin estado";
-  const two_factor_enabled = decodedToken.two_factor_enabled || false;
-
-  const initials = fullname
+    const initials = user.fullname
     .split(' ')
     .map((word) => word[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
-  const statusColor = decodedToken.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500';
+  const statusColor = user.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500';
 
   return (
     <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
@@ -61,7 +46,7 @@ export function Header() {
             <Button variant="ghost" className="flex items-center gap-3 px-3">
               <div className="relative">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={`https://avatar.vercel.sh/${email}`} />
+                  <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
                   <AvatarFallback className="bg-blue-500 text-white font-semibold">
                     {initials}
                   </AvatarFallback>
@@ -73,8 +58,8 @@ export function Header() {
               </div>
 
               <div className="hidden text-left sm:block">
-                <p className="text-sm font-semibold text-gray-900">{fullname}</p>
-                <p className="text-xs text-gray-500">{role}</p>
+                <p className="text-sm font-semibold text-gray-900">{user.fullname}</p>
+                <p className="text-xs text-gray-500">{user.role}</p>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -82,13 +67,13 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             {/* User Info Section */}
             <div className="px-2 py-1.5">
-              <p className="text-sm font-semibold text-gray-900">{fullname}</p>
-              <p className="text-xs text-gray-500">{email}</p>
+              <p className="text-sm font-semibold text-gray-900">{user.fullname}</p>
+              <p className="text-xs text-gray-500">{user.email}</p>
               <div className="mt-2 flex items-center gap-2">
                 <span
                   className={`inline-block h-2 w-2 rounded-full ${statusColor}`}
                 />
-                <span className="text-xs font-medium text-gray-700">{status}</span>
+                <span className="text-xs font-medium text-gray-700">{user.status}</span>
               </div>
             </div>
 
@@ -100,12 +85,12 @@ export function Header() {
               <span>Mi Perfil</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem onChange={() => router.push('/dashboard/settings')}>
+            <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Configuración</span>
             </DropdownMenuItem>
 
-            {two_factor_enabled && (
+            {user.two_factor_enabled && (
               <DropdownMenuItem disabled>
                 <span className="text-xs text-green-600">✓ 2FA Activado</span>
               </DropdownMenuItem>

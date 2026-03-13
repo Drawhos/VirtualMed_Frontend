@@ -144,3 +144,35 @@ export function getTokenValidationStatus(token: string): {
     status: getTokenStatus(token),
   };
 }
+
+export function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? match.split('=')[1] : null;
+}
+
+/**
+ * Obtiene y decodifica el token desde la cookie
+ */
+export function getTokenFromCookie(): string | null {
+  return getCookie('token');
+}
+
+// auth-utils.ts — agregar al final
+export const waitForCookie = (cookieName: string, timeout = 1000): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const check = () => {
+      if (document.cookie.includes(cookieName)) {
+        resolve(true);
+      } else if (Date.now() - start > timeout) {
+        resolve(false);
+      } else {
+        setTimeout(check, 20);
+      }
+    };
+    check();
+  });
+};
