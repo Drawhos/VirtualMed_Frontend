@@ -11,12 +11,13 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { authService } from "@/lib/api/auth.service";
 import { useAuthStore } from "@/store/auth.store";
+import { waitForCookie } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
-import { decodeToken } from "@/lib/auth-utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
+import { UserRole } from "@/constants/userRole";
 import {
   Form,
   FormField,
@@ -45,7 +46,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const LoginForm = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { setToken } = useAuthStore();
+  const { setToken, setRefreshToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const savedEmail = typeof window !== "undefined" ? localStorage.getItem("rememberEmail") ?? "" : "";
@@ -59,7 +60,7 @@ export const LoginForm = () => {
     },
   });
 
-  // Leer localStorage solo en el cliente, después del mount
+  // Leer localStorage para "remember me" al cargar el componente
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberEmail");
     if (savedEmail) {
@@ -75,31 +76,22 @@ export const LoginForm = () => {
         email: values.email,
         password: values.password,
       });
+
+      // Verificar si requiere 2FA
+      if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
+        router.push("/verify-2fa");
+        return;
+      }
       
-      // Procesar access token
       if ('accessToken' in response && response.accessToken) {
-        const token = response.accessToken;
-        
-        // Decodificar token para extraer información
-        const decodedToken = decodeToken(token);
-        
-        if (!decodedToken) {
-          throw new Error("No se pudo decodificar el token");
+        // Guardar refreshToken
+        if ('refreshToken' in response && response.refreshToken) {
+          setRefreshToken(response.refreshToken);
         }
+        const user = setToken(response.accessToken, response.expiresInSeconds);
         
-        // Guardar token en el estado global y localStorage
-        setToken(token);
-        localStorage.setItem('token', response.accessToken);
-
-        // Extraer status y role del token
-        const userStatus = decodedToken.status;
-        const userRole = decodedToken.role;
-        const fullname = decodedToken.fullname
-        
-        console.log("Decoded token:", userStatus, userRole, fullname);
-
         // Verificar si el usuario está inactivo
-        if (userStatus === "inactive") {
+        if (user.status === "Inactive") {
           toast({
             title: "Cuenta Inactiva",
             description: "Tu cuenta está inactiva. Por favor contacta con soporte.",
@@ -108,33 +100,30 @@ export const LoginForm = () => {
           setIsLoading(false);
           return;
         }
-          toast({
-            title: "Bienvenido",
-            description: `Hola ${fullname}, iniciaste sesión exitosamente.`,
-            variant: "default",
-          });
-            // Redirigir según el rol
-          const redirectPath =
-          userRole === "Doctor" ? "/doctor/dashboard" : "/patient/dashboard";
+        // Guardar preferencia de "remember me"
+        if (values.rememberMe) {
+          localStorage.setItem("rememberEmail", values.email);
+        } else {
+          localStorage.removeItem("rememberEmail");
+        }
+
+        toast({
+          title: "Bienvenido",
+          description: `Hola ${user.fullname}, iniciaste sesión exitosamente.`,
+          variant: "default",
+        });
+        // Redirigir según el rol
+        const redirectPath = user.role === UserRole.DOCTOR ? "/dashboard/doctor" : "/dashboard/patient";
+        const cookieReady = await waitForCookie('token');
+        if (cookieReady) {
           router.push(redirectPath);
-          
-          // Guardar refreshToken
-          if ('refreshToken' in response && response.refreshToken) {
-            localStorage.setItem("refreshToken", response.refreshToken);
-          }
-      }
-
-      // Guardar preferencia de "remember me"
-      if (values.rememberMe) {
-        localStorage.setItem("rememberEmail", values.email);
-      } else {
-        localStorage.removeItem("rememberEmail");
-      }
-
-      // Verificar si requiere 2FA
-      if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
-        // Ir a pantalla de 2FA con response.tempTwoFactorToken
-        router.push("/verify-2fa");
+        } else {
+          toast({ 
+            title: 'Error de sesión', 
+            description: 'No se pudo iniciar sesión correctamente, intenta de nuevo.', 
+            variant: 'destructive' 
+          });
+        }
       }
 
     } catch (error) {
@@ -147,7 +136,6 @@ export const LoginForm = () => {
           errorMessage = error.response.data.message;
         }
       }
-
       toast({
         title: "Error",
         description: errorMessage,
