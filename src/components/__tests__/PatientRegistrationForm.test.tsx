@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PatientRegistrationForm from '../PatientRegistrationForm';
 import { authService } from '@/lib/api/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { AuthResponse } from '@/types/index';
 
 // Mock service y hooks
+vi.mock('@/lib/api/auth.service', () => ({
+  authService: {
+    registerPacient: vi.fn()
+  }
+}));
 vi.mock('@/lib/api/auth.service');
 vi.mock('@/hooks/use-toast');
 vi.mock('next/navigation', () => ({
@@ -21,33 +27,30 @@ describe('PatientRegistrationForm', () => {
     vi.clearAllMocks();
     (useToast as any).mockReturnValue({ toast: mockToast });
     (useRouter as any).mockReturnValue({ push: mockPush });
-    (authService.registerPacient as any).mockResolvedValue(undefined);
+    vi.mocked(authService.registerPacient).mockResolvedValue({} as AuthResponse);
   });
 
   describe('Renderizado del formulario', () => {
     it('debe renderizar todos los campos del formulario', () => {
       render(<PatientRegistrationForm />);
 
-      // Usar IDs para evitar ambigüedades
-      expect(document.getElementById('email')).toBeInTheDocument();
-      expect(document.getElementById('password')).toBeInTheDocument();
-      expect(document.getElementById('confirmPassword')).toBeInTheDocument();
-      expect(document.getElementById('firstName')).toBeInTheDocument();
-      expect(document.getElementById('lastName')).toBeInTheDocument();
-      expect(document.getElementById('dateOfBirth')).toBeInTheDocument();
-      expect(document.getElementById('phoneNumber')).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^contraseña/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/confirmar contraseña/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/nombre/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/apellido/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/fecha/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/teléfono/i)).toBeInTheDocument();
     });
 
     it('debe renderizar el botón de submit', () => {
       render(<PatientRegistrationForm />);
-      const buttons = screen.getAllByRole('button').filter(btn => btn.getAttribute('type') === 'submit');
-      expect(buttons.length).toBeGreaterThan(0);
+      expect(screen.getByRole('button', { name: /registrarme/i })).toBeInTheDocument();
     });
 
     it('debe tener valores por defecto en los campos', () => {
       render(<PatientRegistrationForm />);
-      const emailInput = document.getElementById('email') as HTMLInputElement;
-      expect(emailInput?.value).toBe('');
+      expect(screen.getByLabelText(/email/i)).toHaveValue('');
     });
   });
 
@@ -56,8 +59,7 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const emailInput = document.getElementById('email') as HTMLInputElement;
-      await user.type(emailInput, 'invalid-email');
+      await user.type(screen.getByLabelText(/email/i), 'invalid-email');
       await user.tab();
 
       await waitFor(() => {
@@ -69,8 +71,7 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
-      await user.type(passwordInput, 'short');
+      await user.type(screen.getByLabelText(/^contraseña/i), 'short');
       await user.tab();
 
       await waitFor(() => {
@@ -82,11 +83,8 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
-      const confirmInput = document.getElementById('confirmPassword') as HTMLInputElement;
-
-      await user.type(passwordInput, 'Password123');
-      await user.type(confirmInput, 'DifferentPassword123');
+      await user.type(screen.getByLabelText(/^contraseña/i), 'Password123');
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), 'DifferentPassword123');
       await user.tab();
 
       await waitFor(() => {
@@ -98,8 +96,7 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const phoneInput = document.getElementById('phoneNumber') as HTMLInputElement;
-      await user.type(phoneInput, '123');
+      await user.type(screen.getByLabelText(/teléfono/i), '123');
       await user.tab();
 
       await waitFor(() => {
@@ -111,12 +108,11 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const dateInput = document.getElementById('dateOfBirth') as HTMLInputElement;
       const futureDate = new Date();
       futureDate.setFullYear(futureDate.getFullYear() + 1);
       const futureDateStr = futureDate.toISOString().split('T')[0];
 
-      await user.type(dateInput, futureDateStr);
+      await user.type(screen.getByLabelText(/fecha/i), futureDateStr);
       await user.tab();
 
       await waitFor(() => {
@@ -132,11 +128,10 @@ describe('PatientRegistrationForm', () => {
 
       await fillFormWithValidData(user);
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
-        expect(authService.registerPacient).toHaveBeenCalled();
+        expect(vi.mocked(authService.registerPacient)).toHaveBeenCalled();
       });
     });
 
@@ -146,8 +141,7 @@ describe('PatientRegistrationForm', () => {
 
       await fillFormWithValidData(user);
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: expect.any(String) }));
@@ -160,8 +154,7 @@ describe('PatientRegistrationForm', () => {
 
       await fillFormWithValidData(user);
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/login');
@@ -175,8 +168,7 @@ describe('PatientRegistrationForm', () => {
       render(<PatientRegistrationForm />);
       await fillFormWithValidData(user);
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalled();
@@ -187,10 +179,9 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      await fillFormWithValidData(user, false, true);
+      await fillFormWithValidData(user, { acceptPrivacy: false });
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(/política de privacidad/i)).toBeInTheDocument();
@@ -201,10 +192,9 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      await fillFormWithValidData(user, true, false);
+      await fillFormWithValidData(user, { authorizeData: false });
 
-      const submitButton = screen.getAllByRole('button').find(btn => btn.getAttribute('type') === 'submit');
-      if (submitButton) await user.click(submitButton);
+      fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(/tratamiento de datos/i)).toBeInTheDocument();
@@ -215,42 +205,38 @@ describe('PatientRegistrationForm', () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
-      expect(passwordInput.type).toBe('password');
+      const passwordInput = screen.getByLabelText(/^contraseña/i);
+      expect(passwordInput).toHaveAttribute('type', 'password');
 
-      const toggleButtons = screen.getAllByRole('button', { name: /mostrar|ocultar/i });
-      const firstToggle = toggleButtons[0];
+      const [firstToggle] = screen.getAllByRole('button', { name: /mostrar|ocultar/i });
+      await user.click(firstToggle);
+      expect(passwordInput).toHaveAttribute('type', 'text');
 
       await user.click(firstToggle);
-      expect(passwordInput.type).toBe('text');
-
-      await user.click(firstToggle);
-      expect(passwordInput.type).toBe('password');
+      expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
     it('debe alternar visibilidad de confirmación de contraseña', async () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
-      expect(confirmPasswordInput.type).toBe('password');
+      const confirmInput = screen.getByLabelText(/confirmar contraseña/i);
+      expect(confirmInput).toHaveAttribute('type', 'password');
 
-      const toggleButtons = screen.getAllByRole('button', { name: /mostrar|ocultar/i });
-      const secondToggle = toggleButtons[1];
+      const [, secondToggle] = screen.getAllByRole('button', { name: /mostrar|ocultar/i });
+      await user.click(secondToggle);
+      expect(confirmInput).toHaveAttribute('type', 'text');
 
       await user.click(secondToggle);
-      expect(confirmPasswordInput.type).toBe('text');
-
-      await user.click(secondToggle);
-      expect(confirmPasswordInput.type).toBe('password');
+      expect(confirmInput).toHaveAttribute('type', 'password');
     });
 
     it('debe revalidar confirmPassword cuando cambia password', async () => {
       const user = userEvent.setup();
       render(<PatientRegistrationForm />);
 
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
-      const confirmInput = document.getElementById('confirmPassword') as HTMLInputElement;
+      const passwordInput = screen.getByLabelText(/^contraseña/i);
+      const confirmInput = screen.getByLabelText(/confirmar contraseña/i);
 
       await user.type(passwordInput, 'InitialPassword123');
       await user.type(confirmInput, 'DifferentPassword123');
@@ -258,10 +244,21 @@ describe('PatientRegistrationForm', () => {
       // Cambiar password
       await user.clear(passwordInput);
       await user.type(passwordInput, 'NewPassword123');
+      await user.tab();
 
       // Debe revalidar y mostrar error
       await waitFor(() => {
         expect(screen.getByText(/no coinciden/i)).toBeInTheDocument();
+      });
+    });
+    it('no debe enviar el formulario con campos vacíos', async () => {
+      const user = userEvent.setup();
+      render(<PatientRegistrationForm />);
+
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(vi.mocked(authService.registerPacient)).not.toHaveBeenCalled();
       });
     });
   });
@@ -273,24 +270,17 @@ describe('PatientRegistrationForm', () => {
 
 async function fillFormWithValidData(
   user: ReturnType<typeof userEvent.setup>,
-  acceptPrivacy: boolean = true,
-  authorizeData: boolean = true
+  options: { acceptPrivacy?: boolean; authorizeData?: boolean } = {}
 ) {
-  const emailInput = document.getElementById('email') as HTMLInputElement;
-  const passwordInput = document.getElementById('password') as HTMLInputElement;
-  const confirmInput = document.getElementById('confirmPassword') as HTMLInputElement;
-  const firstNameInput = document.getElementById('firstName') as HTMLInputElement;
-  const lastNameInput = document.getElementById('lastName') as HTMLInputElement;
-  const dateInput = document.getElementById('dateOfBirth') as HTMLInputElement;
-  const phoneInput = document.getElementById('phoneNumber') as HTMLInputElement;
-
-  await user.type(emailInput, 'test@example.com');
-  await user.type(passwordInput, 'Password123!');
-  await user.type(confirmInput, 'Password123!');
-  await user.type(firstNameInput, 'Juan');
-  await user.type(lastNameInput, 'Pérez');
-  await user.type(dateInput, '1990-05-15');
-  await user.type(phoneInput, '3001234567');
+  const { acceptPrivacy = true, authorizeData = true } = options;
+  
+  await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+  await user.type(screen.getByLabelText(/^contraseña/i), 'Password123!');
+  await user.type(screen.getByLabelText(/confirmar contraseña/i), 'Password123!');
+  await user.type(screen.getByLabelText(/nombre/i), 'Juan');
+  await user.type(screen.getByLabelText(/apellido/i), 'Pérez');
+  await user.type(screen.getByLabelText(/fecha/i), '1990-05-15');
+  await user.type(screen.getByLabelText(/teléfono/i), '3001234567');
 
   // Check the checkboxes based on parameters
   const checkboxes = screen.getAllByRole('checkbox');
