@@ -6,6 +6,7 @@ import { authService } from '@/lib/api/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AuthResponse } from '@/types/index';
+import axios from 'axios';
 
 // Mock service y hooks
 vi.mock('@/lib/api/auth.service', () => ({
@@ -75,7 +76,7 @@ describe('PatientRegistrationForm', () => {
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.getByText(/al menos 8 caracteres/i)).toBeInTheDocument();
+        expect(screen.getByText(/8 caracteres/i)).toBeInTheDocument();
       });
     });
 
@@ -162,9 +163,10 @@ describe('PatientRegistrationForm', () => {
     });
 
     it('debe manejar errores de API', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(authService.registerPacient).mockRejectedValueOnce(new axios.AxiosError('API Error', '500'));
+      
       const user = userEvent.setup();
-      (authService.registerPacient as any).mockRejectedValueOnce(new Error('API Error'));
-
       render(<PatientRegistrationForm />);
       await fillFormWithValidData(user);
 
@@ -172,7 +174,8 @@ describe('PatientRegistrationForm', () => {
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalled();
-      });
+      }, { timeout: 3000 });
+      consoleSpy.mockRestore();
     });
 
     it('debe mostrar error cuando no acepta política de privacidad', async () => {

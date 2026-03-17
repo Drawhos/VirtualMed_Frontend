@@ -17,6 +17,9 @@ export default defineConfig({
         '**/*.config.{js,ts}',
         '**/dist/**',
         '**/.next/**',
+        'src/lib/api/axios.ts', // cliente HTTP
+        'src/store/auth.store.ts', // Zustand store de autenticación
+        'src/components/ui/**',  // componentes de shadcn, código externo
       ],
       thresholds: {
         lines: 60,

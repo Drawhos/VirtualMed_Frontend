@@ -23,6 +23,7 @@ export const authService = {
     const response = await apiClient.get<DoctorResponse>(`/doctors/${doctorId}`);
     return response.data;
   },
+  
   logout: async (): Promise<void> => {
       try {
         await apiClient.post('/auth/logout');
