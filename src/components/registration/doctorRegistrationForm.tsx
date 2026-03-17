@@ -376,7 +376,7 @@ export default function DoctorRegistrationForm() {
                         <Info className="text-primary mt-1" size={40} />
                         <div className="text-xs text-slate-600 leading-relaxed">
                             Al registrarte, aceptas que VirtualMed verificará tu licencia médica contra bases de datos nacionales.
-                            La verificación típicamente toma 24-48 horas. Tu cuenta permanecerá en estado <strong>"Pendiente"</strong> hasta que la documentación sea aprobada.
+                            La verificación típicamente toma 24-48 horas. Tu cuenta permanecerá en estado <strong>&quot;Pendiente&quot;</strong> hasta que la documentación sea aprobada.
                         </div>
                     </div>
 

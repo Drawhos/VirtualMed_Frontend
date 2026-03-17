@@ -67,7 +67,7 @@ export const LoginForm = () => {
       form.setValue("email", savedEmail);
       form.setValue("rememberMe", true);
     }
-  }, []);
+  }, [form]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
