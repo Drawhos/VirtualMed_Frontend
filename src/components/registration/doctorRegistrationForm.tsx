@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, ShieldCheck, UploadCloud, Info } from "lucide-react";
+import { User, ShieldCheck, UploadCloud, Info, Check, X } from "lucide-react";
 import { authService } from "@/lib/api/auth.service";
 import { MEDICAL_SPECIALTIES } from "@/constants/specialties";
 import { DoctorRegisterRequest } from "@/types";
@@ -22,13 +22,28 @@ export default function DoctorRegistrationForm() {
         specialty: ""
     });
 
+    // Estado para mostrar requisitos de contraseña
+    const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+
+    // Validaciones de contraseña
+    const passwordRequirements = {
+        minLength: formData.password.length >= 8,
+        hasUpperCase: /[A-Z]/.test(formData.password),
+        hasLowerCase: /[a-z]/.test(formData.password),
+        hasNumber: /[0-9]/.test(formData.password),
+        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+    };
+
+    const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
+    const passwordsMatch = formData.password !== "" && formData.password === formData.confirmPassword;
+
     // Verificar si todos los campos están completos
     const isFormValid = () => {
         return (
             formData.fullName.trim() !== "" &&
             formData.email.trim() !== "" &&
-            formData.password.trim() !== "" &&
-            formData.confirmPassword.trim() === formData.password.trim() &&
+            isPasswordValid &&
+            passwordsMatch &&
             formData.professionalLicense.trim() !== "" &&
             formData.specialty !== "" &&
             file !== null
@@ -157,10 +172,79 @@ export default function DoctorRegistrationForm() {
                                     type="password" 
                                     name="password" 
                                     required 
-                                    className="input-style" 
+                                    className={`input-style ${
+                                        formData.password && !isPasswordValid 
+                                            ? "border-red-500 focus:ring-red-500" 
+                                            : formData.password && isPasswordValid 
+                                            ? "border-green-500 focus:ring-green-500" 
+                                            : ""
+                                    }`}
                                     value={formData.password}
                                     onChange={handleInputChange}
+                                    onFocus={() => setShowPasswordRequirements(true)}
                                 />
+                                
+                                {/* Requisitos de contraseña */}
+                                {showPasswordRequirements && formData.password.length > 0 && (
+                                    <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                                        <p className="text-xs font-semibold text-slate-700 mb-2">Tu contraseña debe contener:</p>
+                                        
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {passwordRequirements.minLength ? (
+                                                <Check className="text-green-600" size={16} />
+                                            ) : (
+                                                <X className="text-red-500" size={16} />
+                                            )}
+                                            <span className={passwordRequirements.minLength ? "text-green-600" : "text-slate-600"}>
+                                                Mínimo 8 caracteres
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {passwordRequirements.hasUpperCase ? (
+                                                <Check className="text-green-600" size={16} />
+                                            ) : (
+                                                <X className="text-red-500" size={16} />
+                                            )}
+                                            <span className={passwordRequirements.hasUpperCase ? "text-green-600" : "text-slate-600"}>
+                                                Al menos una letra mayúscula (A-Z)
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {passwordRequirements.hasLowerCase ? (
+                                                <Check className="text-green-600" size={16} />
+                                            ) : (
+                                                <X className="text-red-500" size={16} />
+                                            )}
+                                            <span className={passwordRequirements.hasLowerCase ? "text-green-600" : "text-slate-600"}>
+                                                Al menos una letra minúscula (a-z)
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {passwordRequirements.hasNumber ? (
+                                                <Check className="text-green-600" size={16} />
+                                            ) : (
+                                                <X className="text-red-500" size={16} />
+                                            )}
+                                            <span className={passwordRequirements.hasNumber ? "text-green-600" : "text-slate-600"}>
+                                                Al menos un número (0-9)
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            {passwordRequirements.hasSpecialChar ? (
+                                                <Check className="text-green-600" size={16} />
+                                            ) : (
+                                                <X className="text-red-500" size={16} />
+                                            )}
+                                            <span className={passwordRequirements.hasSpecialChar ? "text-green-600" : "text-slate-600"}>
+                                                Al menos un carácter especial (!@#$%^&*...)
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col gap-2">
@@ -169,10 +253,28 @@ export default function DoctorRegistrationForm() {
                                     type="password" 
                                     name="confirmPassword" 
                                     required 
-                                    className="input-style" 
+                                    className={`input-style ${
+                                        formData.confirmPassword && !passwordsMatch 
+                                            ? "border-red-500 focus:ring-red-500" 
+                                            : formData.confirmPassword && passwordsMatch 
+                                            ? "border-green-500 focus:ring-green-500" 
+                                            : ""
+                                    }`}
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
                                 />
+                                {formData.confirmPassword && !passwordsMatch && (
+                                    <p className="text-xs text-red-600 flex items-center gap-1">
+                                        <X size={14} />
+                                        Las contraseñas no coinciden
+                                    </p>
+                                )}
+                                {formData.confirmPassword && passwordsMatch && (
+                                    <p className="text-xs text-green-600 flex items-center gap-1">
+                                        <Check size={14} />
+                                        Las contraseñas coinciden
+                                    </p>
+                                )}
                             </div>
 
                         </div>

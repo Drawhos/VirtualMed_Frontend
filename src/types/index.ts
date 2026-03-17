@@ -2,18 +2,25 @@ import { UserRole } from "../constants/userRole";
 import { IdentificationType } from "../constants/identificationType";
 
 export interface User {
-  id: string;
-  documentNumber: string;
+  sub: string;
   email: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
-  password: string;
   role: UserRole;
-  twoFactorEnabled: boolean;
+  fullname: string;
+  status: "Active" | "Pending" | "Inactive";
+  email_verified: boolean;
+  two_factor_enabled: boolean;
+  permission: string[];
+  // Legacy fields for compatibility
+  id?: string;
+  documentNumber?: string;
+  emailVerified?: boolean;
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+  twoFactorEnabled?: boolean;
   phoneNumber?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // ============================================
@@ -56,13 +63,12 @@ export interface LoginRequest {
 }
 
 export interface PatientRegisterRequest {
-  firstName: string;
-  lastName: string;
+  fullname: string;
   email: string;
   password: string;
   confirmPassword: string;
   identificationType: IdentificationType | undefined;
-  documentNumber: string;
+  document: string;
   dateOfBirth: string;
   gender: "male" | "female" | "other";
   phoneNumber?: string;
@@ -71,10 +77,14 @@ export interface PatientRegisterRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
-  user: User;
-  requiresTwoFactor?: boolean;
+  expiresInSeconds: number;
+}
+
+export interface AuthResponseWith2FA {
+  requiresTwoFactor: boolean;
+  tempTwoFactorToken: string;
 }
 
 export interface DoctorRegisterRequest {
@@ -88,4 +98,17 @@ export interface DoctorRegisterRequest {
 
 export interface DoctorResponse {
   doctorId: string;
+}
+
+// ============================================
+// 2FA TYPES
+// ============================================
+export interface Enable2FAResponse {
+  otpauthUri: string;
+  secret: string;
+  recoveryCodes: string[];
+}
+
+export interface Verify2FARequest {
+  code: string;
 }
