@@ -1,11 +1,16 @@
 // src/lib/api/auth.service.ts
 import { useAuthStore } from '@/store/auth.store';
 import apiClient from './axios';
-import { AuthResponse, AuthResponseWith2FA, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest, Enable2FAResponse, Verify2FARequest } from '@/types';
+import { AuthResponse, AuthResponseWith2FA, Login2FARequest, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest, Enable2FAResponse, Verify2FARequest } from '@/types';
 
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse | AuthResponseWith2FA> => {
     const response = await apiClient.post<AuthResponse | AuthResponseWith2FA>('/auth/login', credentials);
+    return response.data;
+  },
+
+  login2FA: async (data: Login2FARequest): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/auth/login/2fa', data);
     return response.data;
   },
 

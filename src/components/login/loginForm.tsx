@@ -11,13 +11,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { authService } from "@/lib/api/auth.service";
 import { useAuthStore } from "@/store/auth.store";
-import { waitForCookie } from "@/lib/auth-utils";
+import { getDashboardPathByRole, waitForCookie } from "@/lib/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
-import { UserRole } from "@/constants/userRole";
 import {
   Form,
   FormField,
@@ -49,7 +48,6 @@ export const LoginForm = () => {
   const { setToken, setRefreshToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const savedEmail = typeof window !== "undefined" ? localStorage.getItem("rememberEmail") ?? "" : "";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -79,7 +77,8 @@ export const LoginForm = () => {
 
       // Verificar si requiere 2FA
       if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
-        router.push("/verify-2fa");
+        sessionStorage.setItem('tempTwoFactorToken', response.tempTwoFactorToken);
+        router.push("/login/2fa");
         return;
       }
       
@@ -113,7 +112,7 @@ export const LoginForm = () => {
           variant: "default",
         });
         // Redirigir según el rol
-        const redirectPath = user.role === UserRole.DOCTOR ? "/dashboard/doctor" : "/dashboard/patient";
+        const redirectPath = getDashboardPathByRole(user.role);
         const cookieReady = await waitForCookie('token');
         if (cookieReady) {
           router.push(redirectPath);

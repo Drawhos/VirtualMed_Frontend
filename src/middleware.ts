@@ -1,6 +1,8 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
+import { UserRole } from '@/constants/userRole';
+import { getDashboardPathByRole } from '@/lib/auth-utils';
 
 interface DecodedToken {
   role?: string;
@@ -8,11 +10,6 @@ interface DecodedToken {
   exp?: number;
   [key: string]: any;
 }
-
-const ROLE_ROUTES: Record<string, string> = {
-  patient: '/dashboard/patient',
-  doctor: '/dashboard/doctor',
-};
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
@@ -44,19 +41,19 @@ export function middleware(request: NextRequest) {
   }
 
   const userRole = decoded.role;
-  const correctPath = userRole ? ROLE_ROUTES[userRole] : null;
+  const correctPath = getDashboardPathByRole(userRole);
 
   // Si intenta acceder a un dashboard que no le corresponde
   // → redirigir a su dashboard correcto
-  if (pathname.startsWith('/dashboard/patient') && userRole !== 'Patient') {
+  if (pathname.startsWith('/dashboard/patient') && userRole !== UserRole.PATIENT) {
     return NextResponse.redirect(
-      new URL(correctPath ?? '/login', request.url)
+      new URL(correctPath, request.url)
     );
   }
 
-  if (pathname.startsWith('/dashboard/doctor') && userRole !== 'Doctor') {
+  if (pathname.startsWith('/dashboard/doctor') && userRole !== UserRole.DOCTOR) {
     return NextResponse.redirect(
-      new URL(correctPath ?? '/login', request.url)
+      new URL(correctPath, request.url)
     );
   }
 

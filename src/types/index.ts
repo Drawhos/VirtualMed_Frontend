@@ -87,6 +87,11 @@ export interface AuthResponseWith2FA {
   tempTwoFactorToken: string;
 }
 
+export interface Login2FARequest {
+  code: string;
+  tempTwoFactorToken: string;
+}
+
 export interface DoctorRegisterRequest {
   fullName: string;
   email: string;

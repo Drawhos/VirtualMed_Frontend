@@ -160,6 +160,17 @@ export function getTokenFromCookie(): string | null {
   return getCookie('token');
 }
 
+export function getDashboardPathByRole(role?: string | null): string {
+  switch (role) {
+    case UserRole.DOCTOR:
+      return '/dashboard/doctor';
+    case UserRole.PATIENT:
+      return '/dashboard/patient';
+    default:
+      return '/login';
+  }
+}
+
 // auth-utils.ts — agregar al final
 export const waitForCookie = (cookieName: string, timeout = 1000): Promise<boolean> => {
   return new Promise((resolve) => {
