@@ -288,6 +288,11 @@ export default function PatientRegistrationForm() {
         });
         return;
       }
+      toast({
+        title: "Error inesperado",
+        description: "Ocurrió un problema. Intenta de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 

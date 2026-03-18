@@ -65,7 +65,7 @@ export const LoginForm = () => {
       form.setValue("email", savedEmail);
       form.setValue("rememberMe", true);
     }
-  }, []);
+  }, [form]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
@@ -165,6 +165,7 @@ export const LoginForm = () => {
                 <FormLabel>Correo Electrónico</FormLabel>
                 <FormControl>
                   <Input
+                    id="email"
                     type="email"
                     placeholder="tu@correo.com"
                     disabled={isLoading}
@@ -186,6 +187,7 @@ export const LoginForm = () => {
                 <FormControl>
                   <div className="relative">
                     <Input
+                      id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       disabled={isLoading}
@@ -193,6 +195,7 @@ export const LoginForm = () => {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       disabled={isLoading}
