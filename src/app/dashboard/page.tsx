@@ -30,7 +30,7 @@ export default function DashboardPage() {
         // Fallback para otros roles (Admin, FamilyMember, etc.)
         router.push('/login');
     }
-  }, [user, isLoading, hasToken, router]);
+  }, [user, isLoading, hasToken, router, _hasHydrated]);
 
   if (isLoading || !hasToken || !user) {
     return (

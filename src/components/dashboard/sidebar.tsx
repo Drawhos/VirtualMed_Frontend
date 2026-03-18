@@ -28,7 +28,7 @@ export function Sidebar() {
     if (!user) {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, router, _hasHydrated]);
 
   if (!_hasHydrated || !user) return null;
 
