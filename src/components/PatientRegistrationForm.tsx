@@ -225,7 +225,7 @@ export default function PatientRegistrationForm() {
         email: values.email,
         password: values.password,
         confirmPassword: values.confirmPassword,
-        fullname: values.firstName + " " + values.lastName,
+        fullName: values.firstName + " " + values.lastName,
         identificationType: values.identificationType,
         phoneNumber: values.phoneNumber,
         document: values.document,

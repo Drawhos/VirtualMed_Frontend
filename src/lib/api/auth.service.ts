@@ -1,7 +1,17 @@
 // src/lib/api/auth.service.ts
 import { useAuthStore } from '@/store/auth.store';
 import apiClient from './axios';
-import { AuthResponse, AuthResponseWith2FA, LoginRequest, PatientRegisterRequest, DoctorResponse, DoctorRegisterRequest, Enable2FAResponse, Verify2FARequest } from '@/types';
+import {
+  AuthResponse,
+  AuthResponseWith2FA,
+  LoginRequest,
+  PatientRegisterRequest,
+  PatientRegisterResponse,
+  DoctorResponse,
+  DoctorRegisterRequest,
+  Enable2FAResponse,
+  Verify2FARequest,
+} from '@/types';
 
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse | AuthResponseWith2FA> => {
@@ -9,8 +19,11 @@ export const authService = {
     return response.data;
   },
 
-  registerPacient: async (data: PatientRegisterRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/Patients', data);
+  registerPacient: async (data: PatientRegisterRequest): Promise<PatientRegisterResponse> => {
+    const response = await apiClient.post<PatientRegisterResponse>(
+      '/auth/register/patient',
+      data
+    );
     return response.data;
   },
 

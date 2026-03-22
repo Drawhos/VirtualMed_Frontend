@@ -63,7 +63,7 @@ export interface LoginRequest {
 }
 
 export interface PatientRegisterRequest {
-  fullname: string;
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -74,6 +74,10 @@ export interface PatientRegisterRequest {
   phoneNumber?: string;
   acceptPrivacy: boolean;
   authorizeData: boolean;
+}
+
+export interface PatientRegisterResponse {
+  patientId: string;
 }
 
 export interface AuthResponse {
