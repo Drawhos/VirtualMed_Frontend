@@ -22,7 +22,13 @@ vi.mock('@/lib/api/auth.service', () => ({
 vi.mock('@/hooks/use-toast');
 vi.mock('next/navigation', () => ({ useRouter: vi.fn() }));
 vi.mock('@/store/auth.store', () => ({ useAuthStore: vi.fn() }));
-vi.mock('@/lib/auth-utils', () => ({ waitForCookie: vi.fn() }));
+vi.mock('@/lib/auth-utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/auth-utils')>();
+  return {
+    ...actual,
+    waitForCookie: vi.fn(),
+  };
+});
 
 // ============================================================================
 // Fixtures
@@ -252,7 +258,7 @@ describe('LoginForm', () => {
       fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/verify-2fa');
+        expect(mockPush).toHaveBeenCalledWith('/login/2fa');
       });
     });
 
