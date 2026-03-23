@@ -5,7 +5,7 @@ import PatientRegistrationForm from '../PatientRegistrationForm';
 import { authService } from '@/lib/api/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { AuthResponse } from '@/types/index';
+import { PatientRegisterResponse } from '@/types/index';
 import axios from 'axios';
 
 // Mock service y hooks
@@ -28,7 +28,9 @@ describe('PatientRegistrationForm', () => {
     vi.clearAllMocks();
     (useToast as any).mockReturnValue({ toast: mockToast });
     (useRouter as any).mockReturnValue({ push: mockPush });
-    vi.mocked(authService.registerPacient).mockResolvedValue({} as AuthResponse);
+    vi.mocked(authService.registerPacient).mockResolvedValue({
+      patientId: '00000000-0000-0000-0000-000000000001',
+    } as PatientRegisterResponse);
   });
 
   describe('Renderizado del formulario', () => {
