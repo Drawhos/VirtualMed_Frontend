@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope } from 'lucide-react';
+import { Calendar, CalendarCheck, Users, FileText, Heart, Settings, Menu, X, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -38,6 +38,7 @@ export function Sidebar() {
     ];
 
     const doctorItems: NavItem[] = [
+      { label: 'Crear citas', href: '/dashboard/doctor/appointments', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
       { label: 'Pacientes', href: '/dashboard/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
       { label: 'Encuentros Clínicos', href: '/dashboard/clinical-encounters', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Read'] },
       { label: 'Prescripciones', href: '/dashboard/prescriptions', icon: FileText, requiredPermissions: ['Prescription:Read'] },

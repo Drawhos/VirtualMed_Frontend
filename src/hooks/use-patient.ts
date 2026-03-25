@@ -10,15 +10,3 @@ export function usePatient(patientId: string) {
     enabled: !!patientId,
   });
 }
-
-export function useUpdatePatient() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ patientId, data }: { patientId: string; data: Partial<Patient> }) =>
-      patientService.updateProfile(patientId, data),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['patient', data.id] });
-    },
-  });
-}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Este proyecto incluye tests unitarios para el formulario de registro de pacientes utilizando **Vitest** y **React Testing Library**.
+Este proyecto incluye tests unitarios para los formularios y funciones útiles utilizando **Vitest** y **React Testing Library**.
 
 ## Estructura de Tests
 
@@ -10,16 +10,15 @@ Este proyecto incluye tests unitarios para el formulario de registro de paciente
 src/
 ├── components/
 │   ├── __tests__/
-│   │   └── PatientRegistrationForm.test.tsx  # Tests del formulario de registro
-│   └── PatientRegistrationForm.tsx
+│   │   └── # Tests
 ├── test/
-│   ├── setup.ts                               # Configuración global de tests
+│   ├── setup.ts  # Configuración global de tests
 │   └── ...
 ```
 
 ## Requisitos
 
-- Node.js 18+
+- Node.js 22+
 - npm 9+
 
 ## Instalación
@@ -37,14 +36,25 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-
 npm run test
 ```
 
-### Modo watch (se re-ejecutan con cambios)
-```bash
-npm run test:watch
-```
-
 ### Con coverage
 ```bash
 npm run test:coverage
+```
+Incluye un reporte HTML disponible en `coverage/index.html`
+
+### Correr un archivo de test específico:
+```bash
+npm run test archivo_especifico:
+```
+
+### Verificar si existen errores de tipado
+```bash
+npm run lint
+```
+
+### Verificar si existen problemas de compilación
+```bash
+npm run build
 ```
 
 ## Configuración
@@ -59,50 +69,9 @@ npm run test:coverage
 - Mockea módulos de Next.js (next/navigation, next/link)
 - Limpia DOM después de cada test
 
-## Tests Incluidos
-
-### PatientRegistrationForm.test.tsx
-
-#### Renderizado
-- ✅ Verifica que todos los campos del formulario se rendericen
-- ✅ Verifica que exista el botón de submit
-- ✅ Verifica que haya valores por defecto
-
-#### Validación
-- ✅ Email inválido
-- ✅ Contraseña muy corta (< 8 caracteres)
-- ✅ Contraseña y confirmación no coinciden
-- ✅ Teléfono sin 10 dígitos
-- ✅ Fecha de nacimiento en el futuro
-
-#### Submit
-- ✅ Envío exitoso del formulario
-- ✅ Mostrar mensaje de éxito
-- ✅ Redirección a /login
-- ✅ Manejo de errores de API
-- ✅ Rechazo sin aceptar política de privacidad
-- ✅ Rechazo sin autorizar tratamiento de datos
-- ✅ Alternar visibilidad de contraseña
-- ✅ Revalidación de confirmación cuando cambia password
-
-### Total: 17 tests ✅
-
 ## Cobertura
 
 Cobertura mínima requerida: **60%**
-
-Cobertura actual:
-- **Statements**: 82.8%
-- **Branches**: 63.52% ✅
-- **Functions**: 87.75%
-- **Lines**: 82.35%
-
-Para generar un reporte HTML:
-```bash
-npm run test:coverage
-```
-
-El reporte estará disponible en `coverage/index.html`
 
 ## Escribir Nuevos Tests
 
@@ -131,13 +100,6 @@ describe('Componente', () => {
   });
 });
 ```
-
-### Mejores prácticas
-1. Use IDs html para selectores específicos vía `document.getElementById()`
-2. Use `screen.getByRole()` para elementos interactive (buttons, inputs, etc.)
-3. Use `waitFor()` para operaciones asincrónicas
-4. Mock servicios y hooks externos con `vi.mock()`
-5. Limpie mocks en `beforeEach()`
 
 ## Troubleshooting
 

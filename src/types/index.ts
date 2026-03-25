@@ -1,26 +1,21 @@
 import { UserRole } from "../constants/userRole";
 import { IdentificationType } from "../constants/identificationType";
+import { AppointmentStatus } from "@/constants/appointmentStatus";
+import { UserStatus } from "@/constants/userStatus";
+import { PatientGender } from "@/constants/patientGender";
 
 export interface User {
   sub: string;
   email: string;
   role: UserRole;
   fullname: string;
-  status: "Active" | "Pending" | "Inactive";
+  status: UserStatus;
   email_verified: boolean;
   two_factor_enabled: boolean;
   permission: string[];
   // Legacy fields for compatibility
-  id?: string;
-  documentNumber?: string;
-  emailVerified?: boolean;
   firstName?: string;
   lastName?: string;
-  password?: string;
-  twoFactorEnabled?: boolean;
-  phoneNumber?: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 // ============================================
@@ -70,7 +65,7 @@ export interface PatientRegisterRequest {
   identificationType: IdentificationType | undefined;
   document: string;
   dateOfBirth: string;
-  gender: "male" | "female" | "other";
+  gender: PatientGender;
   phoneNumber?: string;
   acceptPrivacy: boolean;
   authorizeData: boolean;
@@ -120,4 +115,32 @@ export interface Enable2FAResponse {
 
 export interface Verify2FARequest {
   code: string;
+}
+
+// ============================================
+// APPOINTMENT TYPES
+// ============================================
+export interface Appointment {
+  patientId: string;
+  doctorId: string | null; // Puede ser null, el backend asignará el doctor basado en el token
+  scheduledAt: string;
+  durationMinutes: number;
+  reason: string | null;
+  status: AppointmentStatus;
+}
+
+export interface AppointmentGetResponse {
+  id: string;
+  patientId: string;
+  doctorId: string | null; // Puede ser null, el backend asignará el doctor basado en el token
+  scheduledAt: string;
+  durationMinutes: number;
+  reason: string | null;
+  status: AppointmentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppointmentResponse {
+  appointmentId: string;
 }

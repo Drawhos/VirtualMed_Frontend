@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { waitForCookie } from '@/lib/auth-utils';
 import axios from 'axios';
 import { UserRole } from '@/constants/userRole';
+import { UserStatus } from '@/constants/userStatus';
 
 // ============================================================================
 // Mocks
@@ -43,13 +44,13 @@ const mockPatientToken = {
 const mockPatientUser = {
   fullname: 'Juan Pérez',
   role: UserRole.PATIENT,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 const mockDoctorUser = {
   fullname: 'Dra. García',
   role: UserRole.DOCTOR,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 // ============================================================================

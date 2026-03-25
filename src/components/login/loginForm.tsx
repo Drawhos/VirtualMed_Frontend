@@ -25,6 +25,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import { UserStatus } from "@/constants/userStatus";
 
 // ============================================
 // Schema
@@ -90,7 +91,7 @@ export const LoginForm = () => {
         const user = setToken(response.accessToken, response.expiresInSeconds);
         
         // Verificar si el usuario está inactivo
-        if (user.status === "Inactive") {
+        if (user.status === UserStatus.INACTIVE) {
           toast({
             title: "Cuenta Inactiva",
             description: "Tu cuenta está inactiva. Por favor contacta con soporte.",

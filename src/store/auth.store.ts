@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { decodeToken } from '@/lib/auth-utils';
 import { User } from '@/types';
 import { UserRole } from "@/constants/userRole";
+import { UserStatus } from '@/constants/userStatus';
 
 const TOKEN_COOKIE = 'token';
 const REFRESH_TOKEN_COOKIE = 'refreshToken';
@@ -54,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
           email: decoded.email!,
           role: decoded.role as UserRole,
           fullname: decoded.fullname!,
-          status: decoded.status as 'Active' | 'Pending' | 'Inactive',
+          status: decoded.status as UserStatus.ACTIVE | UserStatus.PENDING | UserStatus.INACTIVE,
           email_verified: decoded.email_verified ?? false,
           two_factor_enabled: decoded.two_factor_enabled ?? false,
           permission: decoded.permission ?? [],
