@@ -15,6 +15,7 @@ import {
   getTokenValidationStatus,
   getCookie,
   getTokenFromCookie,
+  getDashboardPathByRole,
   waitForCookie,
 } from '@/lib/auth-utils';
 import { UserRole } from '@/constants/userRole';
@@ -243,6 +244,18 @@ describe('auth-utils', () => {
       const result = getTokenValidationStatus(expiredToken);
       expect(result.isValid).toBe(false);
       expect(result.isExpired).toBe(true);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+
+  describe('getDashboardPathByRole', () => {
+    it('debe retornar la ruta de admin para rol ADMIN', () => {
+      expect(getDashboardPathByRole(UserRole.ADMIN)).toBe('/dashboard/admin');
+    });
+
+    it('debe retornar /login para rol no soportado', () => {
+      expect(getDashboardPathByRole('UnknownRole')).toBe('/login');
     });
   });
 

@@ -57,6 +57,12 @@ const mockDoctorUser = {
   status: 'Active',
 };
 
+const mockAdminUser = {
+  fullname: 'Admin Root',
+  role: UserRole.ADMIN,
+  status: 'Active',
+};
+
 // ============================================================================
 // Test suite
 // ============================================================================
@@ -495,6 +501,25 @@ describe('LoginTwoFactorPage', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/dashboard/doctor');
+      });
+    });
+
+    it('debe redirigir a /dashboard/admin si el rol es ADMIN', async () => {
+      const user = userEvent.setup();
+      mockSetToken.mockReturnValue(mockAdminUser);
+
+      render(<LoginTwoFactorPage />);
+
+      const inputs = document.querySelectorAll('input[type="text"]') as NodeListOf<HTMLInputElement>;
+
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await user.click(screen.getByRole('button', { name: /verificar código/i }));
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/admin');
       });
     });
   });

@@ -57,6 +57,12 @@ export function middleware(request: NextRequest) {
     );
   }
 
+  if (pathname.startsWith('/dashboard/admin') && userRole !== UserRole.ADMIN) {
+    return NextResponse.redirect(
+      new URL(correctPath, request.url)
+    );
+  }
+
   return NextResponse.next();
 }
 

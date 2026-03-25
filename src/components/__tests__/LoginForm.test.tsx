@@ -52,6 +52,12 @@ const mockDoctorUser = {
   status: 'Active',
 };
 
+const mockAdminUser = {
+  fullname: 'Admin Root',
+  role: UserRole.ADMIN,
+  status: 'Active',
+};
+
 // ============================================================================
 // Test suite
 // ============================================================================
@@ -197,6 +203,19 @@ describe('LoginForm', () => {
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/dashboard/doctor');
+      });
+    });
+
+    it('debe redirigir a /dashboard/admin si el rol es ADMIN', async () => {
+      mockSetToken.mockReturnValue(mockAdminUser);
+      const user = userEvent.setup();
+      render(<LoginForm />);
+
+      await fillLoginForm(user);
+      fireEvent.submit(document.querySelector('form')!);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/admin');
       });
     });
 

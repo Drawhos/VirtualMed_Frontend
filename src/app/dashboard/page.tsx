@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
-import { UserRole } from '@/constants/userRole';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getCookie } from '@/lib/auth-utils';
+import { getCookie, getDashboardPathByRole } from '@/lib/auth-utils';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -19,17 +18,8 @@ export default function DashboardPage() {
       return;
     }
 
-    switch (user.role) {
-      case UserRole.DOCTOR:
-        router.push('/dashboard/doctor');
-        break;
-      case UserRole.PATIENT:
-        router.push('/dashboard/patient');
-        break;
-      default:
-        // Fallback para otros roles (Admin, FamilyMember, etc.)
-        router.push('/login');
-    }
+    const redirectPath = getDashboardPathByRole(user.role);
+    router.push(redirectPath);
   }, [user, isLoading, hasToken, router, _hasHydrated]);
 
   if (isLoading || !hasToken || !user) {

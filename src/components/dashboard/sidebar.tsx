@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -48,6 +48,10 @@ export function Sidebar() {
       { label: 'Métricas Vitales', href: '/dashboard/vital-metrics', icon: Heart, requiredPermissions: ['VitalMetric:Read'] },
     ];
 
+    const adminItems: NavItem[] = [
+      { label: 'Logs Auditoría', href: '/dashboard/admin/audit-logs', icon: ShieldCheck },
+    ];
+
     const settingsItems: NavItem[] = [
       { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
     ];
@@ -55,6 +59,7 @@ export function Sidebar() {
     let items = [...commonItems];
     if (user.role === UserRole.DOCTOR) items = [...items, ...doctorItems];
     else if (user.role === UserRole.PATIENT) items = [...items, ...patientItems];
+    else if (user.role === UserRole.ADMIN) items = [...items, ...adminItems];
 
     return [...items, ...settingsItems];
   };
