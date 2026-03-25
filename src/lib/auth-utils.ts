@@ -163,6 +163,8 @@ export function getTokenFromCookie(): string | null {
 
 export function getDashboardPathByRole(role?: string | null): string {
   switch (role) {
+    case UserRole.ADMIN:
+      return '/dashboard/admin';
     case UserRole.DOCTOR:
       return '/dashboard/doctor';
     case UserRole.PATIENT:

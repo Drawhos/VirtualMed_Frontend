@@ -144,3 +144,31 @@ export interface AppointmentGetResponse {
 export interface AppointmentResponse {
   appointmentId: string;
 }
+
+// AUDIT LOG TYPES
+// ============================================
+export type AuditOperationCode = 'I' | 'U' | 'D';
+
+export interface AuditLog {
+  occurredAt: string;
+  tableName: string;
+  operation: AuditOperationCode | string;
+  rowPk: string;
+  oldData?: string | null;
+  newData?: string | null;
+  appUserId?: string | null;
+}
+
+export interface AuditLogFilters {
+  tableName?: string;
+  operation?: AuditOperationCode;
+  from?: string;
+  to?: string;
+}
+
+export interface AuditLogsResponse {
+  items: AuditLog[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
