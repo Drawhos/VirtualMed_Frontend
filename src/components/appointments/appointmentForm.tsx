@@ -78,9 +78,19 @@ const buildSchema = (isAdmin: boolean) =>
           today.setHours(0, 0, 0, 0);
           const oneYearFromNow = new Date();
           oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-          return selectedDate > today && selectedDate <= oneYearFromNow;
+
+          if (selectedDate <= today || selectedDate > oneYearFromNow) return false;
+
+          // Restricción horaria: solo entre 7:00 y 19:00
+          const hours = selectedDate.getHours();
+          const minutes = selectedDate.getMinutes();
+          const totalMinutes = hours * 60 + minutes;
+          return totalMinutes >= 7 * 60 && totalMinutes <= 19 * 60;
         },
-        { message: "La fecha debe estar entre hoy y 1 año en el futuro" }
+        {
+          message:
+            "La fecha debe estar entre hoy y 1 año en el futuro, y la hora debe ser entre 7:00 AM y 7:00 PM",
+        }
       ),
     durationMinutes: z
     .union([z.number(), z.string()])
