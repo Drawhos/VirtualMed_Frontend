@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Settings } from 'lucide-react';
+import { LogOut, User, Settings, CheckCircle2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -90,9 +90,10 @@ export function Header() {
               <span>Configuración</span>
             </DropdownMenuItem>
 
-            {user.two_factor_enabled && (
-              <DropdownMenuItem disabled>
-                <span className="text-xs text-green-600">✓ 2FA Activado</span>
+            {user?.two_factor_enabled === true && (
+              <DropdownMenuItem disabled className="cursor-default">
+                <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
+                <span className="text-xs text-green-600 font-medium">2FA Activado</span>
               </DropdownMenuItem>
             )}
 

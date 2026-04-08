@@ -1,26 +1,21 @@
 import { UserRole } from "../constants/userRole";
 import { IdentificationType } from "../constants/identificationType";
+import { AppointmentStatus } from "@/constants/appointmentStatus";
+import { UserStatus } from "@/constants/userStatus";
+import { PatientGender } from "@/constants/patientGender";
 
 export interface User {
   sub: string;
   email: string;
   role: UserRole;
   fullname: string;
-  status: "Active" | "Pending" | "Inactive";
+  status: UserStatus;
   email_verified: boolean;
   two_factor_enabled: boolean;
   permission: string[];
   // Legacy fields for compatibility
-  id?: string;
-  documentNumber?: string;
-  emailVerified?: boolean;
   firstName?: string;
   lastName?: string;
-  password?: string;
-  twoFactorEnabled?: boolean;
-  phoneNumber?: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 // ============================================
@@ -70,7 +65,7 @@ export interface PatientRegisterRequest {
   identificationType: IdentificationType | undefined;
   document: string;
   dateOfBirth: string;
-  gender: "male" | "female" | "other";
+  gender: PatientGender;
   phoneNumber?: string;
   acceptPrivacy: boolean;
   authorizeData: boolean;
@@ -78,6 +73,32 @@ export interface PatientRegisterRequest {
 
 export interface PatientRegisterResponse {
   patientId: string;
+}
+
+export interface PatientSearch {
+  items: [
+    {
+      id: string,
+      fullName: string,
+      document: string
+    }
+  ],
+  page: number,
+  pageSize: number,
+  totalCount: number
+}
+
+export interface DoctorSearch {
+  items: [
+    {
+      id: string,
+      fullName: string,
+      professionalLicense: string
+    }
+  ],
+  page: number,
+  pageSize: number,
+  totalCount: number
 }
 
 export interface AuthResponse {
@@ -123,6 +144,36 @@ export interface Verify2FARequest {
 }
 
 // ============================================
+// APPOINTMENT TYPES
+// ============================================
+export interface Appointment {
+  patientId: string;
+  doctorId: string | null; // Puede ser null, el backend asignará el doctor basado en el token
+  scheduledAt: string;
+  durationMinutes: number;
+  reason: string | null;
+  status: AppointmentStatus;
+}
+
+export interface AppointmentGetResponse {
+  id: string;
+  patientId: string;
+  doctorId: string | null; // Puede ser null, el backend asignará el doctor basado en el token
+  doctorFullName: string;
+  patientFullName: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  reason: string | null;
+  status: AppointmentStatus;
+  hasClinicalEncounter: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppointmentResponse {
+  appointmentId: string;
+}
+
 // AUDIT LOG TYPES
 // ============================================
 export type AuditOperationCode = 'I' | 'U' | 'D';

@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 import { UserRole } from '@/constants/userRole';
+import { UserStatus } from '@/constants/userStatus';
 
 interface DecodedToken {
   sub?: string;
@@ -125,7 +126,7 @@ export function hasRole(token: string, role: UserRole): boolean {
  */
 export function isUserActive(token: string): boolean {
   const status = getTokenStatus(token);
-  return status === 'Active';
+  return status === UserStatus.ACTIVE;
 }
 
 /**
@@ -168,12 +169,13 @@ export function getDashboardPathByRole(role?: string | null): string {
       return '/dashboard/doctor';
     case UserRole.PATIENT:
       return '/dashboard/patient';
+    case UserRole.ADMIN:
+      return '/dashboard/admin';
     default:
       return '/login';
   }
 }
 
-// auth-utils.ts — agregar al final
 export const waitForCookie = (cookieName: string, timeout = 1000): Promise<boolean> => {
   return new Promise((resolve) => {
     const start = Date.now();

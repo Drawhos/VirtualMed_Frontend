@@ -19,6 +19,7 @@ import {
   waitForCookie,
 } from '@/lib/auth-utils';
 import { UserRole } from '@/constants/userRole';
+import { UserStatus } from '@/constants/userStatus';
 
 // ============================================================================
 // Helpers
@@ -41,7 +42,7 @@ const validPayload = {
   sub: 'user-123',
   email: 'test@example.com',
   role: UserRole.PATIENT,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
   fullname: 'Juan Pérez',
   permission: ['read:profile', 'edit:profile'],
   exp: FUTURE_EXP,

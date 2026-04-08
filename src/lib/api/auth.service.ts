@@ -8,7 +8,6 @@ import {
   LoginRequest,
   PatientRegisterRequest,
   PatientRegisterResponse,
-  DoctorResponse,
   DoctorRegisterRequest,
   Enable2FAResponse,
   Verify2FARequest,
@@ -35,11 +34,6 @@ export const authService = {
 
   registerDoctor: async (data: DoctorRegisterRequest): Promise<AuthResponse> => {
     const response = await CreateFormData(data);
-    return response.data;
-  },
-
-  getDoctor: async (doctorId: string): Promise<DoctorResponse> => {
-    const response = await apiClient.get<DoctorResponse>(`/doctors/${doctorId}`);
     return response.data;
   },
   

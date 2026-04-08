@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { waitForCookie } from '@/lib/auth-utils';
 import axios from 'axios';
 import { UserRole } from '@/constants/userRole';
+import { UserStatus } from '@/constants/userStatus';
 
 // ============================================================================
 // Mocks
@@ -43,13 +44,13 @@ const mockPatientToken = {
 const mockPatientUser = {
   fullname: 'Juan Pérez',
   role: UserRole.PATIENT,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 const mockDoctorUser = {
   fullname: 'Dra. García',
   role: UserRole.DOCTOR,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 const mockAdminUser = {
@@ -67,6 +68,7 @@ describe('LoginForm', () => {
   const mockPush = vi.fn();
   const mockSetToken = vi.fn();
   const mockSetRefreshToken = vi.fn();
+  const mockDecodeAndBuildUser = vi.fn();
   const localStorageSetItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
   const localStorageRemoveItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {});
   const localStorageGetItem = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
@@ -82,9 +84,10 @@ describe('LoginForm', () => {
     vi.mocked(useAuthStore).mockReturnValue({
       setToken: mockSetToken,
       setRefreshToken: mockSetRefreshToken,
+      decodeAndBuildUser: mockDecodeAndBuildUser,
     } as any);
 
-    mockSetToken.mockReturnValue(mockPatientUser);
+    mockDecodeAndBuildUser.mockReturnValue(mockPatientUser);
     vi.mocked(waitForCookie).mockResolvedValue(true);
     vi.mocked(authService.login).mockResolvedValue(mockPatientToken as any);
 
@@ -194,7 +197,7 @@ describe('LoginForm', () => {
     });
 
     it('debe redirigir a /dashboard/doctor si el rol es DOCTOR', async () => {
-      mockSetToken.mockReturnValue(mockDoctorUser);
+      mockDecodeAndBuildUser.mockReturnValue(mockDoctorUser);
       const user = userEvent.setup();
       render(<LoginForm />);
 
@@ -207,7 +210,7 @@ describe('LoginForm', () => {
     });
 
     it('debe redirigir a /dashboard/admin si el rol es ADMIN', async () => {
-      mockSetToken.mockReturnValue(mockAdminUser);
+      mockDecodeAndBuildUser.mockReturnValue(mockAdminUser);
       const user = userEvent.setup();
       render(<LoginForm />);
 
@@ -282,7 +285,7 @@ describe('LoginForm', () => {
     });
 
     it('debe mostrar error de cuenta inactiva', async () => {
-      mockSetToken.mockReturnValue({ ...mockPatientUser, status: 'Inactive' });
+      mockDecodeAndBuildUser.mockReturnValue({ ...mockPatientUser, status: UserStatus.INACTIVE });
       const user = userEvent.setup();
       render(<LoginForm />);
 
@@ -292,7 +295,7 @@ describe('LoginForm', () => {
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
-            title: 'Cuenta Inactiva',
+            title: 'Tu cuenta está pendiente o inactiva. Contacta con soporte.',
             variant: 'destructive',
           })
         );

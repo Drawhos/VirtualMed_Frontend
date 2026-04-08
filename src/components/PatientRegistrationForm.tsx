@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { normalizeSpaces } from "@/lib/utils";
+import { PatientGender } from "@/constants/patientGender";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -111,7 +112,7 @@ const patientRegistrationSchema = z
       .refine((v) => new Date(v) < new Date(), {
         message: "La fecha debe ser anterior a hoy",
       }),
-    gender: z.enum(["male", "female", "other"], {
+    gender: z.enum([PatientGender.MALE, PatientGender.FEMALE, PatientGender.OTHER], {
       required_error: "Selecciona género",
     }),
     phoneNumber: z.string().refine((v) => /^[0-9]{10}$/.test(v), {
@@ -203,7 +204,7 @@ export default function PatientRegistrationForm() {
       identificationType: undefined,
       document: "",
       dateOfBirth: "",
-      gender: "male",
+      gender: PatientGender.MALE,
       phoneNumber: "",
       acceptPrivacy: false,
       authorizeData: false,
@@ -519,9 +520,9 @@ export default function PatientRegistrationForm() {
                       <SelectValue placeholder="Selecciona" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="male">Masculino</SelectItem>
-                      <SelectItem value="female">Femenino</SelectItem>
-                      <SelectItem value="other">Otro</SelectItem>
+                      <SelectItem value={PatientGender.MALE}>Masculino</SelectItem>
+                      <SelectItem value={PatientGender.FEMALE}>Femenino</SelectItem>
+                      <SelectItem value={PatientGender.OTHER}>Otro</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>

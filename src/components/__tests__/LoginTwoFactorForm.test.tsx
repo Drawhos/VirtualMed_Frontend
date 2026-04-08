@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { waitForCookie } from '@/lib/auth-utils';
 import axios from 'axios';
 import { UserRole } from '@/constants/userRole';
+import { UserStatus } from '@/constants/userStatus';
 
 // ============================================================================
 // Mocks
@@ -48,13 +49,13 @@ const mockPatientToken = {
 const mockPatientUser = {
   fullname: 'Juan Pérez',
   role: UserRole.PATIENT,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 const mockDoctorUser = {
   fullname: 'Dra. García',
   role: UserRole.DOCTOR,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 const mockAdminUser = {
@@ -71,6 +72,7 @@ describe('LoginTwoFactorPage', () => {
   const mockPush = vi.fn();
   const mockSetToken = vi.fn();
   const mockSetRefreshToken = vi.fn();
+  const mockDecodeAndBuildUser = vi.fn();
   const sessionStorageSetItem = vi.spyOn(Storage.prototype, 'setItem');
   const sessionStorageGetItem = vi.spyOn(Storage.prototype, 'getItem');
   const sessionStorageRemoveItem = vi.spyOn(Storage.prototype, 'removeItem');
@@ -87,11 +89,12 @@ describe('LoginTwoFactorPage', () => {
     });
 
     vi.mocked(useAuthStore).mockReturnValue({
+      decodeAndBuildUser: mockDecodeAndBuildUser,
       setToken: mockSetToken,
       setRefreshToken: mockSetRefreshToken,
     } as any);
 
-    mockSetToken.mockReturnValue(mockPatientUser);
+    mockDecodeAndBuildUser.mockReturnValue(mockPatientUser);
     vi.mocked(waitForCookie).mockResolvedValue(true);
     vi.mocked(authService.login2FA).mockResolvedValue(mockPatientToken as any);
   });
@@ -468,7 +471,7 @@ describe('LoginTwoFactorPage', () => {
 
     it('debe redirigir a /dashboard/patient si el rol es PATIENT', async () => {
       const user = userEvent.setup();
-      mockSetToken.mockReturnValue(mockPatientUser);
+      mockDecodeAndBuildUser.mockReturnValue(mockPatientUser);
 
       render(<LoginTwoFactorPage />);
 
@@ -487,7 +490,7 @@ describe('LoginTwoFactorPage', () => {
 
     it('debe redirigir a /dashboard/doctor si el rol es DOCTOR', async () => {
       const user = userEvent.setup();
-      mockSetToken.mockReturnValue(mockDoctorUser);
+      mockDecodeAndBuildUser.mockReturnValue(mockDoctorUser);
 
       render(<LoginTwoFactorPage />);
 
@@ -506,7 +509,7 @@ describe('LoginTwoFactorPage', () => {
 
     it('debe redirigir a /dashboard/admin si el rol es ADMIN', async () => {
       const user = userEvent.setup();
-      mockSetToken.mockReturnValue(mockAdminUser);
+      mockDecodeAndBuildUser.mockReturnValue(mockAdminUser);
 
       render(<LoginTwoFactorPage />);
 

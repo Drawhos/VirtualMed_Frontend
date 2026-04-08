@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck } from 'lucide-react';
+import { Calendar, CalendarCheck, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -33,33 +33,35 @@ export function Sidebar() {
   if (!_hasHydrated || !user) return null;
 
   const getNavItems = (): NavItem[] => {
-    const commonItems: NavItem[] = [
-      { label: 'Citas', href: '/dashboard/appointments', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
-    ];
 
     const doctorItems: NavItem[] = [
+      { label: 'Citas', href: '/dashboard/doctor/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
+      { label: 'Crear citas', href: '/dashboard/doctor/appointments/create', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
       { label: 'Pacientes', href: '/dashboard/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
       { label: 'Encuentros Clínicos', href: '/dashboard/clinical-encounters', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Read'] },
       { label: 'Prescripciones', href: '/dashboard/prescriptions', icon: FileText, requiredPermissions: ['Prescription:Read'] },
     ];
 
     const patientItems: NavItem[] = [
+      { label: 'Citas', href: '/dashboard/patient/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
       { label: 'Historial Médico', href: '/dashboard/medical-history', icon: FileText, requiredPermissions: ['ClinicalEncounter:Read'] },
       { label: 'Métricas Vitales', href: '/dashboard/vital-metrics', icon: Heart, requiredPermissions: ['VitalMetric:Read'] },
     ];
 
     const adminItems: NavItem[] = [
       { label: 'Logs Auditoría', href: '/dashboard/admin/audit-logs', icon: ShieldCheck },
+      { label: 'Citas', href: '/dashboard/admin/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
+      { label: 'Crear citas', href: '/dashboard/admin/appointments/create', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
     ];
 
     const settingsItems: NavItem[] = [
       { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
     ];
 
-    let items = [...commonItems];
-    if (user.role === UserRole.DOCTOR) items = [...items, ...doctorItems];
-    else if (user.role === UserRole.PATIENT) items = [...items, ...patientItems];
-    else if (user.role === UserRole.ADMIN) items = [...items, ...adminItems];
+    let items: NavItem[] = [];
+    if (user.role === UserRole.DOCTOR) items = [...doctorItems];
+    else if (user.role === UserRole.PATIENT) items = [...patientItems];
+    else if (user.role === UserRole.ADMIN) items = [...adminItems];
 
     return [...items, ...settingsItems];
   };

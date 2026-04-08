@@ -45,7 +45,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const LoginForm = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { setToken, setRefreshToken } = useAuthStore();
+  const { decodeAndBuildUser,setToken, setRefreshToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,6 +69,7 @@ export const LoginForm = () => {
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
+
     try {
       const response = await authService.login({
         email: values.email,
@@ -78,67 +79,81 @@ export const LoginForm = () => {
       // Verificar si requiere 2FA
       if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
         sessionStorage.setItem('tempTwoFactorToken', response.tempTwoFactorToken);
-        router.push("/login/2fa");
+        router.push('/login/2fa');
         return;
       }
-      
-      if ('accessToken' in response && response.accessToken) {
-        // Guardar refreshToken
-        if ('refreshToken' in response && response.refreshToken) {
-          setRefreshToken(response.refreshToken);
-        }
-        const user = setToken(response.accessToken, response.expiresInSeconds);
-        
-        // Verificar si el usuario está inactivo
-        if (user.status === "Inactive") {
-          toast({
-            title: "Cuenta Inactiva",
-            description: "Tu cuenta está inactiva. Por favor contacta con soporte.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        // Guardar preferencia de "remember me"
-        if (values.rememberMe) {
-          localStorage.setItem("rememberEmail", values.email);
-        } else {
-          localStorage.removeItem("rememberEmail");
-        }
 
+      if (!('accessToken' in response) || !response.accessToken) return;
+
+      const user = decodeAndBuildUser(response.accessToken);
+
+      // Verificar si la cuenta está inactiva
+      if (user.status && user.status.toLowerCase() === 'inactive') {
         toast({
-          title: "Bienvenido",
-          description: `Hola ${user.fullname}, iniciaste sesión exitosamente.`,
-          variant: "default",
+          title: 'Tu cuenta está pendiente o inactiva. Contacta con soporte.',
+          description: 'Tu cuenta ha sido desactivada. Contacta con soporte para más información.',
+          variant: 'destructive',
         });
-        // Redirigir según el rol
-        const redirectPath = getDashboardPathByRole(user.role);
-        const cookieReady = await waitForCookie('token');
-        if (cookieReady) {
-          router.push(redirectPath);
-        } else {
-          toast({ 
-            title: 'Error de sesión', 
-            description: 'No se pudo iniciar sesión correctamente, intenta de nuevo.', 
-            variant: 'destructive' 
-          });
-        }
+        return;
       }
 
-    } catch (error) {
-      let errorMessage = "No pudimos iniciar sesión. Intenta de nuevo.";
+      // Persistir tokens solo si el usuario es válido
+      if ('refreshToken' in response && response.refreshToken) {
+        setRefreshToken(response.refreshToken);
+      }
+      setToken(response.accessToken, response.expiresInSeconds);
 
+      // Esperar cookie antes de cualquier efecto secundario
+      const cookieReady = await waitForCookie('token');
+
+      if (!cookieReady) {
+        toast({
+          title: 'Error de sesión',
+          description: 'No se pudo iniciar sesión correctamente, intenta de nuevo.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Efectos secundarios solo cuando el login es exitoso y confirmado
+      if (values.rememberMe) {
+        localStorage.setItem('rememberEmail', values.email);
+      } else {
+        localStorage.removeItem('rememberEmail');
+      }
+
+      toast({
+        title: 'Bienvenido',
+        description: `Hola ${user.fullname}, iniciaste sesión exitosamente.`,
+        variant: 'default',
+      });
+
+      router.push(getDashboardPathByRole(user.role));
+
+    } catch (error) {
+      let errorMessage = 'No pudimos iniciar sesión. Intenta de nuevo.';
+      
       if (isAxiosError(error)) {
         if (error.response?.status === 401) {
-          errorMessage = "Correo o contraseña incorrectos";
+          const serverMessage = error.response?.data?.message?.toLowerCase() ?? '';
+          if (serverMessage.includes('inactiv') || serverMessage.includes('pendi')) {
+            errorMessage = 'Tu cuenta está pendiente o inactiva. Contacta con soporte.';
+          } else {
+            errorMessage = 'Correo o contraseña incorrectos.';
+          }
+        } else if (error.response?.status === 403) {
+          errorMessage = 'No tienes permiso para acceder.';
+        } else if (error.code === 'ERR_NETWORK') {
+          errorMessage = 'Sin conexión. Verifica tu red e intenta de nuevo.';
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
       }
       toast({
-        title: "Error",
+        title: 'Error',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
+        duration: 5000
       });
     } finally {
       setIsLoading(false);
