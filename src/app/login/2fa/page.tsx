@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 
 export default function LoginTwoFactorPage() {
     const router = useRouter();
-    const { setToken, setRefreshToken } = useAuthStore();
+    const { decodeAndBuildUser, setToken, setRefreshToken } = useAuthStore();
 
     const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
@@ -78,7 +78,8 @@ export default function LoginTwoFactorPage() {
                 setRefreshToken(refreshToken);
             }
 
-            const user = setToken(accessToken, expiresInSeconds);
+            const user = decodeAndBuildUser(accessToken);
+            setToken(accessToken, expiresInSeconds);
             sessionStorage.removeItem('tempTwoFactorToken');
 
             const cookieReady = await waitForCookie('token');

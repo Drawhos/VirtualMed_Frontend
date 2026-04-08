@@ -75,6 +75,32 @@ export interface PatientRegisterResponse {
   patientId: string;
 }
 
+export interface PatientSearch {
+  items: [
+    {
+      id: string,
+      fullName: string,
+      document: string
+    }
+  ],
+  page: number,
+  pageSize: number,
+  totalCount: number
+}
+
+export interface DoctorSearch {
+  items: [
+    {
+      id: string,
+      fullName: string,
+      professionalLicense: string
+    }
+  ],
+  page: number,
+  pageSize: number,
+  totalCount: number
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -133,10 +159,13 @@ export interface AppointmentGetResponse {
   id: string;
   patientId: string;
   doctorId: string | null; // Puede ser null, el backend asignará el doctor basado en el token
+  doctorFullName: string;
+  patientFullName: string;
   scheduledAt: string;
   durationMinutes: number;
   reason: string | null;
   status: AppointmentStatus;
+  hasClinicalEncounter: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,14 +1,17 @@
 // src/lib/api/doctor.service.ts
 import apiClient from './axios';
-import { Appointment, AppointmentResponse, DoctorResponse, Doctor, AppointmentGetResponse } from '@/types';
+import { Appointment, AppointmentResponse, DoctorResponse, Doctor, AppointmentGetResponse, DoctorSearch } from '@/types';
 
 export const doctorService = {
     getDoctor: async (doctorId: string): Promise<DoctorResponse> => {
         const response = await apiClient.get<DoctorResponse>(`/doctors/${doctorId}`);
         return response.data;
     },
-    getDoctors: async (): Promise<Doctor[]> => {
-        const response = await apiClient.get<Doctor[]>('/doctors');
+    getDoctors: async (filters: {
+        q?: string;
+        page?: string;
+    }): Promise<DoctorSearch> => {
+        const response = await apiClient.get<DoctorSearch>('/Doctors/search', { params: filters });
         return response.data;
     },
     createAppointment: async (data: Appointment): Promise<AppointmentResponse> => {

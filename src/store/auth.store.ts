@@ -27,7 +27,8 @@ interface AuthState {
   _hasHydrated: boolean;
 
   setHasHydrated: (state: boolean) => void;
-  setToken: (token: string, expiresIn: number) => User;
+  decodeAndBuildUser: (token: string) => User;
+  setToken: (token: string, expiresIn: number) => void;
   setRefreshToken: (refreshToken: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
@@ -42,12 +43,8 @@ export const useAuthStore = create<AuthState>()(
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      // Solo guarda en cookie — el middleware la leerá desde ahí.
-      // Cuando el backend implemente HttpOnly, elimina esta función
-      // ya que la cookie vendrá automáticamente del servidor.
-      setToken: (token: string, expiresIn: number) => {
-        const decoded = decodeToken(token); // decodifica aquí, una sola vez
-
+      decodeAndBuildUser: (token: string): User => {
+        const decoded = decodeToken(token);
         if (!decoded) throw new Error('Token inválido');
 
         const user: User = {
@@ -60,11 +57,13 @@ export const useAuthStore = create<AuthState>()(
           two_factor_enabled: decoded.two_factor_enabled ?? false,
           permission: decoded.permission ?? [],
         };
-
-        setCookie(TOKEN_COOKIE, token, expiresIn);
-        set({ user, isAuthenticated: true, isLoading: false });
-
+        set({ user });
         return user;
+      },
+
+      setToken: (token: string, expiresIn: number) => {
+        setCookie(TOKEN_COOKIE, token, expiresIn);
+        set({ isAuthenticated: true, isLoading: false });
       },
 
       setRefreshToken: (refreshToken) => {
@@ -84,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, error) => {
         state?.setHasHydrated(true); // Marca cuando Zustand terminó de hidratar
       },
       storage: createJSONStorage(() => {

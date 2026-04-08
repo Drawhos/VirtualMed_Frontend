@@ -176,7 +176,6 @@ export function getDashboardPathByRole(role?: string | null): string {
   }
 }
 
-// auth-utils.ts — agregar al final
 export const waitForCookie = (cookieName: string, timeout = 1000): Promise<boolean> => {
   return new Promise((resolve) => {
     const start = Date.now();

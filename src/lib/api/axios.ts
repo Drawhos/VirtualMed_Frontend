@@ -47,6 +47,11 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    const isLoginRequest = originalRequest?.url?.includes('/auth/login');
+    if (isLoginRequest) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Si ya hay un refresh en curso, encolar esta llamada
       if (isRefreshing) {

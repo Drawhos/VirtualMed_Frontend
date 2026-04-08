@@ -1,6 +1,6 @@
 // src/lib/api/patient.service.ts
 import apiClient from './axios';
-import { Patient} from '@/types';
+import { Patient, PatientSearch} from '@/types';
 
 export const patientService = {
   getProfile: async (patientId: string): Promise<Patient> => {
@@ -18,8 +18,11 @@ export const patientService = {
     return response.data;
   },
 
-  getPatients: async (): Promise<Patient[]> => {
-    const response = await apiClient.get<Patient[]>('/patients');
+  getPatients: async (filters: {
+        q?: string;
+        page?: string;
+    }, options?: { signal?: AbortSignal }): Promise<PatientSearch> => {
+    const response = await apiClient.get<PatientSearch>('/Patients/search', { params: filters, signal: options?.signal });
     return response.data;
   }
 };
