@@ -3,6 +3,8 @@ import { IdentificationType } from "../constants/identificationType";
 import { AppointmentStatus } from "@/constants/appointmentStatus";
 import { UserStatus } from "@/constants/userStatus";
 import { PatientGender } from "@/constants/patientGender";
+import { DiagnosisType } from "@/constants/diagnosisType";
+import { EncounterType } from "@/constants/encounterType";
 
 export interface User {
   sub: string;
@@ -200,4 +202,45 @@ export interface AuditLogsResponse {
   totalCount: number;
   pageNumber: number;
   pageSize: number;
+}
+
+// ============================================
+// CLINICAL ENCOUNTER TYPES
+// ============================================
+export interface ClinicalEncounter {
+  appointmentId: string;
+  encounterType: EncounterType;
+  startAt: string;
+  endAt: string;
+  chiefComplaint: string;
+  currentCondition?: string | null;
+  physicalExam?: string | null,
+  assessment?: string | null,
+  plan?: string | null,
+  notes?: string | null,
+  recordingUrl?: string | null,
+  diagnoses: Array<{
+    icd10Code: string,
+    description: string,
+    type: DiagnosisType
+  }>
+}
+
+export interface ClinicalEncounterResponse {
+  id: string;  
+}
+
+export interface Prescription {
+  encounterId: string,
+  issuedAt: string,
+  validUntil: string,
+  doctorSignatureHash?: string | null,
+  lines: Array<{
+      medicationId?: string | null, // El ID del medicamento se asignará en el backend
+      medicationName: string,
+      dosage: string,
+      frequency: string,
+      durationDays: number,
+      instructions?: string | null
+    }>
 }

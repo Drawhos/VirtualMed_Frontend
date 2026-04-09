@@ -225,7 +225,7 @@ export function AuditLogsView() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pt-16">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                     <h1 className="text-3xl font-semibold text-gray-900">Logs de Auditoría</h1>

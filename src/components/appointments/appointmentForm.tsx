@@ -310,7 +310,7 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
   // Render
   // ============================================
   return (
-    <div className="w-full max-w-2xl mx-auto p-6">
+    <div className="w-full max-w-2xl mx-auto p-6 pt-16">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Crear Nueva Cita</h1>
         <p className="text-muted-foreground mt-2">
@@ -337,8 +337,8 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
                     type="text"
                     placeholder="Buscar paciente por nombre..."
                     value={patientSearch}
-                    onChange={(e) => setPatientSearch(e.target.value)} // 👈 solo actualiza el texto
-                    onKeyDown={(e) => e.key === "Enter" && fetchPatients(patientSearch, 1)} // 👈 Enter también busca
+                    onChange={(e) => setPatientSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && fetchPatients(patientSearch, 1)}
                     className="pl-10 flex-1"
                   />
                   <Button
