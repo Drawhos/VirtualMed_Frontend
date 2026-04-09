@@ -1,6 +1,6 @@
 // src/lib/api/doctor.service.ts
 import apiClient from './axios';
-import { Appointment, AppointmentResponse, DoctorResponse, Doctor, AppointmentGetResponse, DoctorSearch } from '@/types';
+import { Appointment, AppointmentResponse, DoctorResponse, AppointmentGetResponse, DoctorSearch, ClinicalEncounter, ClinicalEncounterResponse, Prescription } from '@/types';
 
 export const doctorService = {
     getDoctor: async (doctorId: string): Promise<DoctorResponse> => {
@@ -28,6 +28,14 @@ export const doctorService = {
         return response.data;
     },
     updateAppointment: async (appointmentId: string, data: Partial<Appointment>): Promise<void> => {
-        const response = await apiClient.put<AppointmentResponse>(`/appointments/${appointmentId}`, data);
+        await apiClient.put<AppointmentResponse>(`/appointments/${appointmentId}`, data);
+    },
+    createClinicalEncounter: async (data: ClinicalEncounter): Promise<ClinicalEncounterResponse> => {
+        const response = await apiClient.post<ClinicalEncounterResponse>('/clinical-encounters', data);
+        console.log('Respuesta del backend:', response.data);
+        return response.data;
+    },
+    createPrescription: async (data: Prescription): Promise<void> => {
+        await apiClient.post('/prescriptions', data);
     }
 }

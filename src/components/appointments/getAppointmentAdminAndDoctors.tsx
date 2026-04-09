@@ -382,7 +382,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
   // Render
   // ============================================
   return (
-    <div className="w-full space-y-6 p-6">
+    <div className="w-full space-y-6 p-6 pt-16">
       {/* Título */}
       <div>
         <h1 className="text-2xl font-bold">Mis Citas</h1>
