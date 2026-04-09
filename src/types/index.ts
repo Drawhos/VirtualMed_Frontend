@@ -227,16 +227,16 @@ export interface ClinicalEncounter {
 }
 
 export interface ClinicalEncounterResponse {
-  appointmentId: string;  
+  id: string;  
 }
 
 export interface Prescription {
   encounterId: string,
   issuedAt: string,
   validUntil: string,
-  doctorSignatureHash: string,
+  doctorSignatureHash?: string | null,
   lines: Array<{
-      medicationId: string,
+      medicationId?: string | null, // El ID del medicamento se asignará en el backend
       medicationName: string,
       dosage: string,
       frequency: string,

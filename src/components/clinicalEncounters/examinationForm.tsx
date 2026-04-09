@@ -196,8 +196,11 @@ export function ExaminationForm() {
     setIsSubmitting(true);
 
     try {
+      const appointmentId = await doctorService.getApppointment(values.appointmentId).then(res => res.id);
+      console.log('ID de cita obtenida para el encuentro clínico:', appointmentId);
+      
       const payload = {
-        appointmentId: values.appointmentId,
+        appointmentId: appointmentId,
         encounterType: parseInt(values.encounterType),
         startAt: new Date(`2000-01-01T${values.startAt}`).toISOString(),
         endAt: new Date(`2000-01-01T${values.endAt}`).toISOString(),
@@ -220,7 +223,7 @@ export function ExaminationForm() {
       });
 
       setTimeout(() => {
-        router.push(`/dashboard/doctor/encounters/prescriptions?encounterId=${response.appointmentId}`);
+        router.push(`/dashboard/doctor/encounters/prescriptions?encounterId=${response.id}`);
       }, 2000);
     } catch (error) {
       const errorMessage = isAxiosError(error)
