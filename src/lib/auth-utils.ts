@@ -151,7 +151,7 @@ export function getCookie(name: string): string | null {
   const match = document.cookie
     .split('; ')
     .find((row) => row.startsWith(`${name}=`));
-  return match ? match.split('=')[1] : null;
+  return match ? decodeURIComponent(match.substring(name.length + 1)) : null;
 }
 
 /**

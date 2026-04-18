@@ -12,7 +12,7 @@ const ONE_MONTH = 60 * 60 * 24 * 30;
 
 function setCookie(name: string, value: string, maxAge: number) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Strict`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Strict`;
 }
 
 function deleteCookie(name: string) {

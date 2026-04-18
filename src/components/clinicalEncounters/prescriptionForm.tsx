@@ -111,7 +111,6 @@ export function PrescriptionForm() {
       reset();
       router.push(`/dashboard/doctor`);
     } catch (error) {
-      console.log('Error al guardar la prescripción:', error);
       toast({
         title: 'Error',
         description: 'Error al guardar la prescripción. Intente nuevamente.',

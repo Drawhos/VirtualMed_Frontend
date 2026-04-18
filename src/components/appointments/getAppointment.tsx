@@ -81,7 +81,6 @@ export default function ListAppointmentsComponent() {
         from: new Date(filters.fromDate).toISOString(),
         to: new Date(filters.toDate).toISOString(),
       });
-      console.log("Citas obtenidas:", response);
 
       setAppointments(response);
       applyStatusFilter(response, filters.status);

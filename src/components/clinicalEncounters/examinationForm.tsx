@@ -197,7 +197,6 @@ export function ExaminationForm() {
 
     try {
       const appointmentId = await doctorService.getApppointment(values.appointmentId).then(res => res.id);
-      console.log('ID de cita obtenida para el encuentro clínico:', appointmentId);
       
       const payload = {
         appointmentId: appointmentId,

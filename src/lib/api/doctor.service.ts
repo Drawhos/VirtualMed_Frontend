@@ -36,12 +36,10 @@ export const doctorService = {
     },
     createClinicalEncounter: async (data: ClinicalEncounter): Promise<ClinicalEncounterResponse> => {
         const response = await apiClient.post<ClinicalEncounterResponse>('/clinical-encounters', data);
-        console.log('Respuesta del backend al crear registro clínico:', response.data);
         return response.data;
     },
     createPrescription: async (data: Prescription): Promise<void> => {
         const response = await apiClient.post('/prescriptions', data);
-        console.log('Respuesta del backend al crear prescripción:', response.data);
         return response.data;
     }
 }
