@@ -77,17 +77,33 @@ export interface PatientRegisterResponse {
   patientId: string;
 }
 
+export interface PatientSearchItem {
+  id: string;
+  fullName: string;
+  document: string;
+  // Compatibilidad con backend que pueda retornar camelCase o lowercase
+  fullname?: string;
+}
+
 export interface PatientSearch {
-  items: [
-    {
-      id: string,
-      fullName: string,
-      document: string
-    }
-  ],
-  page: number,
-  pageSize: number,
-  totalCount: number
+  items: PatientSearchItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
+export interface PatientDetail {
+  id: string;
+  userId: string;
+  identificationType: string;
+  document: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodType: string;
+  allergies: string;
+  phoneNumber: string;
+  acceptPrivacy: boolean;
+  authorizeData: boolean;
 }
 
 export interface DoctorSearch {
