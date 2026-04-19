@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 
 export default function LoginTwoFactorPage() {
     const router = useRouter();
-    const { decodeAndBuildUser, setToken, setRefreshToken } = useAuthStore();
+    const { decodeAndBuildUser, setToken, setRefreshToken, getTempTwoFactorToken, clearTempTwoFactorToken } = useAuthStore();
 
     const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
@@ -58,7 +58,7 @@ export default function LoginTwoFactorPage() {
 
     const handleVerify = async () => {
         const code = otp.join('');
-        const tempTwoFactorToken = sessionStorage.getItem('tempTwoFactorToken');
+        const tempTwoFactorToken = getTempTwoFactorToken();
 
         if (code.length !== 6) return;
         if (!tempTwoFactorToken) {
@@ -80,7 +80,7 @@ export default function LoginTwoFactorPage() {
 
             const user = decodeAndBuildUser(accessToken);
             setToken(accessToken, expiresInSeconds);
-            sessionStorage.removeItem('tempTwoFactorToken');
+            clearTempTwoFactorToken();
 
             const cookieReady = await waitForCookie('token');
             if (!cookieReady) {

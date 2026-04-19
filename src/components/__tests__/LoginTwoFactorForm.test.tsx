@@ -73,16 +73,12 @@ describe('LoginTwoFactorPage', () => {
   const mockSetToken = vi.fn();
   const mockSetRefreshToken = vi.fn();
   const mockDecodeAndBuildUser = vi.fn();
-  const sessionStorageSetItem = vi.spyOn(Storage.prototype, 'setItem');
-  const sessionStorageGetItem = vi.spyOn(Storage.prototype, 'getItem');
-  const sessionStorageRemoveItem = vi.spyOn(Storage.prototype, 'removeItem');
+  const mockGetTempTwoFactorToken = vi.fn();
+  const mockClearTempTwoFactorToken = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    sessionStorageSetItem.mockImplementation(() => {});
-    sessionStorageRemoveItem.mockImplementation(() => {});
-    sessionStorageGetItem.mockReturnValue('temp-2fa-token-123');
+    mockGetTempTwoFactorToken.mockReturnValue('temp-2fa-token-123');
 
     (useRouter as ReturnType<typeof vi.fn>).mockReturnValue({
       push: mockPush,
@@ -92,6 +88,8 @@ describe('LoginTwoFactorPage', () => {
       decodeAndBuildUser: mockDecodeAndBuildUser,
       setToken: mockSetToken,
       setRefreshToken: mockSetRefreshToken,
+      getTempTwoFactorToken: mockGetTempTwoFactorToken,
+      clearTempTwoFactorToken: mockClearTempTwoFactorToken,
     } as any);
 
     mockDecodeAndBuildUser.mockReturnValue(mockPatientUser);
@@ -452,7 +450,7 @@ describe('LoginTwoFactorPage', () => {
       });
     });
 
-    it('debe remover el token temporal de sessionStorage', async () => {
+    it('debe remover el token temporal usando el auth store', async () => {
       const user = userEvent.setup();
       render(<LoginTwoFactorPage />);
 
@@ -465,7 +463,7 @@ describe('LoginTwoFactorPage', () => {
       await user.click(screen.getByRole('button', { name: /verificar código/i }));
 
       await waitFor(() => {
-        expect(sessionStorageRemoveItem).toHaveBeenCalledWith('tempTwoFactorToken');
+        expect(mockClearTempTwoFactorToken).toHaveBeenCalled();
       });
     });
 
@@ -532,7 +530,7 @@ describe('LoginTwoFactorPage', () => {
   describe('Casos especiales', () => {
     it('debe mostrar error si el token temporal expiró', async () => {
       const user = userEvent.setup();
-      sessionStorageGetItem.mockReturnValue(null);
+      mockGetTempTwoFactorToken.mockReturnValue(null);
 
       render(<LoginTwoFactorPage />);
 

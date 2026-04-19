@@ -8,7 +8,9 @@ import { UserStatus } from '@/constants/userStatus';
 
 const TOKEN_COOKIE = 'token';
 const REFRESH_TOKEN_COOKIE = 'refreshToken';
+const TEMP_TWO_FACTOR_COOKIE = 'tempTwoFactorToken';
 const ONE_MONTH = 60 * 60 * 24 * 30;
+const TEN_MINUTES = 60 * 10;
 
 function setCookie(name: string, value: string, maxAge: number) {
   if (typeof document === 'undefined') return;
@@ -18,6 +20,14 @@ function setCookie(name: string, value: string, maxAge: number) {
 function deleteCookie(name: string) {
   if (typeof document === 'undefined') return;
   document.cookie = `${name}=; path=/; max-age=0`;
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.substring(name.length + 1)) : null;
 }
 
 interface AuthState {
@@ -30,6 +40,9 @@ interface AuthState {
   decodeAndBuildUser: (token: string) => User;
   setToken: (token: string, expiresIn: number) => void;
   setRefreshToken: (refreshToken: string) => void;
+  setTempTwoFactorToken: (tempToken: string) => void;
+  getTempTwoFactorToken: () => string | null;
+  clearTempTwoFactorToken: () => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -70,9 +83,22 @@ export const useAuthStore = create<AuthState>()(
         setCookie(REFRESH_TOKEN_COOKIE, refreshToken, ONE_MONTH);
       },
 
+      setTempTwoFactorToken: (tempToken: string) => {
+        setCookie(TEMP_TWO_FACTOR_COOKIE, tempToken, TEN_MINUTES);
+      },
+
+      getTempTwoFactorToken: () => {
+        return getCookie(TEMP_TWO_FACTOR_COOKIE);
+      },
+
+      clearTempTwoFactorToken: () => {
+        deleteCookie(TEMP_TWO_FACTOR_COOKIE);
+      },
+
       logout: () => {
         deleteCookie(TOKEN_COOKIE);
         deleteCookie(REFRESH_TOKEN_COOKIE);
+        deleteCookie(TEMP_TWO_FACTOR_COOKIE);
         set({
           user: null,
           isAuthenticated: false,
