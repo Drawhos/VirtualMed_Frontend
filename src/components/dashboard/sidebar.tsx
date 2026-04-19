@@ -57,9 +57,10 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
 const PATIENT_NAV_ITEMS: NavItem[] = [
   {
     id: 'patient-appointments',
-    label: 'Citas',
+    label: 'Mis Citas',
     icon: Calendar,
-    children: [{ label: 'Listar citas', href: '/dashboard/patient/appointments/list', requiredPermissions: ['Appointment:Read'] }],
+    href: '/dashboard/patient/appointments/list',
+    requiredPermissions: ['Appointment:Read'] 
   },
   {
     id: 'patient-medical-history',

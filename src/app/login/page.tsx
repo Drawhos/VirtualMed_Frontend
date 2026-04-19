@@ -4,7 +4,6 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { LoginForm } from "@/components/login/loginForm";
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,16 +15,6 @@ export default function LoginPage() {
       router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
-
-//   if (isLoading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <div className="animate-pulse text-lg text-muted-foreground">
-//           Cargando...
-//         </div>
-//       </div>
-//     );
-//   }
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
