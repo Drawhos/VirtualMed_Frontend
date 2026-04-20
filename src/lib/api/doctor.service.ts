@@ -22,6 +22,10 @@ export const doctorService = {
         const response = await apiClient.get<AppointmentGetResponse>(`/appointments/${appointmentId}`);
         return response.data;
     },
+    getAppointment: async (appointmentId: string): Promise<AppointmentGetResponse> => {
+        const response = await apiClient.get<AppointmentGetResponse>(`/appointments/${appointmentId}`);
+        return response.data;
+    },
     getAppointments: async (filters: {
         patientId?: string;
         doctorId?: string;

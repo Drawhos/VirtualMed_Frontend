@@ -192,6 +192,51 @@ export interface AppointmentResponse {
   appointmentId: string;
 }
 
+export interface AppointmentDetail extends AppointmentGetResponse {}
+
+export interface ClinicalEncounterDiagnosis {
+  id?: string;
+  icd10Code: string;
+  description: string;
+  type: DiagnosisType | string;
+}
+
+export interface ClinicalEncounterPrescriptionMedication {
+  medicationId?: string | null;
+  medicationName: string;
+  dosage: string;
+  frequency: string;
+  durationDays: number;
+  instructions?: string | null;
+}
+
+export interface ClinicalEncounterPrescription {
+  id?: string;
+  prescriptionNumber?: string;
+  issuedAt: string;
+  validUntil: string;
+  medications: ClinicalEncounterPrescriptionMedication[];
+}
+
+export interface PatientClinicalEncounter {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  encounterType: EncounterType | number | string;
+  startAt: string;
+  endAt: string;
+  chiefComplaint: string;
+  currentCondition?: string | null;
+  physicalExam?: string | null;
+  assessment?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  recordingUrl?: string | null;
+  diagnoses: ClinicalEncounterDiagnosis[];
+  prescriptions: ClinicalEncounterPrescription[];
+}
+
 // AUDIT LOG TYPES
 // ============================================
 export type AuditOperationCode = 'I' | 'U' | 'D';
