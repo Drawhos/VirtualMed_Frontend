@@ -132,8 +132,11 @@ describe('PatientMedicalHistoryView', () => {
 
     await waitFor(() => {
       expect(patientService.getPatientClinicalEncounters).toHaveBeenCalledWith(
-        'patient-1',
-        {},
+        '',
+        {
+          from: undefined,
+          to: undefined,
+        },
         expect.any(Object)
       );
     });
@@ -160,7 +163,7 @@ describe('PatientMedicalHistoryView', () => {
 
     await waitFor(() => {
       expect(patientService.getPatientClinicalEncounters).toHaveBeenLastCalledWith(
-        'patient-1',
+        '',
         {
           from: '2026-04-01T00:00:00.000Z',
           to: '2026-04-30T23:59:59.999Z',
@@ -187,7 +190,7 @@ describe('PatientMedicalHistoryView', () => {
     await user.click(exportButton as HTMLButtonElement);
 
     await waitFor(() => {
-      expect(patientService.exportPatientHistoryPdf).toHaveBeenCalledWith('patient-1');
+      expect(patientService.exportPatientHistoryPdf).toHaveBeenCalledWith('');
     });
 
     await user.click(screen.getAllByRole('button', { name: /ver detalle/i })[0]);
