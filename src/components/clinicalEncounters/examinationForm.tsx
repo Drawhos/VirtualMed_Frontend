@@ -198,7 +198,7 @@ export function ExaminationForm() {
     setIsSubmitting(true);
 
     try {
-      const appointmentId = await doctorService.getApppointment(values.appointmentId).then(res => res.id);
+      const appointmentId = await doctorService.getAppointment(values.appointmentId).then(res => res.id);
       const today = new Date().toISOString().split('T')[0];
       
       const payload = {

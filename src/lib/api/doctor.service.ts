@@ -23,7 +23,7 @@ export const doctorService = {
         const response = await apiClient.post<AppointmentResponse>('/appointments', data);
         return response.data;
     },
-    getApppointment: async (appointmentId: string): Promise<AppointmentGetResponse> => {
+    getAppointment: async (appointmentId: string): Promise<AppointmentGetResponse> => {
         const response = await apiClient.get<AppointmentGetResponse>(`/appointments/${appointmentId}`);
         return response.data;
     },

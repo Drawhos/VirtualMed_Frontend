@@ -15,7 +15,7 @@ import type { AppointmentGetResponse } from '@/types';
 vi.mock('@/lib/api/doctor.service', () => ({
   doctorService: {
     getAppointments: vi.fn(),
-    getApppointment: vi.fn(),
+    getAppointment: vi.fn(),
     createClinicalEncounter: vi.fn(),
   },
 }));
@@ -51,7 +51,7 @@ describe('ExaminationForm', () => {
     (useRouter as any).mockReturnValue({ push: mockPush, back: mockBack });
     (useAuthStore as any).mockReturnValue({ user: { sub: 'doctor-1' } });
     vi.mocked(doctorService.getAppointments).mockResolvedValue([mockAppointment]);
-    vi.mocked(doctorService.getApppointment).mockResolvedValue(mockAppointment);
+    vi.mocked(doctorService.getAppointment).mockResolvedValue(mockAppointment);
     vi.mocked(doctorService.createClinicalEncounter).mockResolvedValue({ id: 'encounter-1' });
   });
 
@@ -171,7 +171,7 @@ describe('ExaminationForm', () => {
       fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
-        expect(doctorService.getApppointment).toHaveBeenCalledWith('apt-1');
+        expect(doctorService.getAppointment).toHaveBeenCalledWith('apt-1');
       });
 
       await waitFor(() => {
