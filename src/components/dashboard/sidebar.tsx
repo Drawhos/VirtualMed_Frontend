@@ -37,7 +37,7 @@ export function Sidebar() {
     const doctorItems: NavItem[] = [
       { label: 'Citas', href: '/dashboard/doctor/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
       { label: 'Crear citas', href: '/dashboard/doctor/appointments/create', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
-      { label: 'Pacientes', href: '/dashboard/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
+      { label: 'Pacientes', href: '/dashboard/doctor/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
       { label: 'Encuentros Clínicos', href: '/dashboard/doctor/encounters/new', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Read'] },
       { label: 'Prescripciones', href: '/dashboard/prescriptions', icon: FileText, requiredPermissions: ['Prescription:Read'] },
     ];
