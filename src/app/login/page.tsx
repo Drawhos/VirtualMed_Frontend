@@ -1,34 +1,47 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { LoginForm } from "@/components/login/loginForm";
-import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
+
+function SessionExpiredHandler() {
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+    if (reason === "session-expired") {
+      toast({
+        title: "Sesión expirada",
+        description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
+        variant: "destructive",
+      });
+      router.replace("/login");
+    }
+  }, [searchParams, toast, router]);
+
+  return null;
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
 
-  // Redirigir si ya está autenticado
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.push("/");
     }
   }, [isAuthenticated, isLoading, router]);
 
-//   if (isLoading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <div className="animate-pulse text-lg text-muted-foreground">
-//           Cargando...
-//         </div>
-//       </div>
-//     );
-//   }
-
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      <Suspense fallback={null}>
+        <SessionExpiredHandler />
+      </Suspense>
+
       {/* Formulario - Lado Izquierdo en Desktop, Arriba en Mobile */}
       <div className="flex items-center justify-center p-4 sm:p-8 lg:p-12 order-2 lg:order-1">
         <LoginForm />

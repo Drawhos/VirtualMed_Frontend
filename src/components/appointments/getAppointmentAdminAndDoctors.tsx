@@ -105,7 +105,6 @@ const EMPTY_EDIT_FORM: EditFormData = {
 // Reutilizable: manejo de errores HTTP
 // ============================================
 const HTTP_ERROR_MESSAGES: Record<number, { title: string; description: string }> = {
-  401: { title: "No autorizado", description: "Tu sesión ha expirado." },
   403: { title: "Acceso denegado", description: "No tienes permiso para realizar esta acción." },
 };
 

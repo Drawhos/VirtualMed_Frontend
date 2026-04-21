@@ -7,7 +7,7 @@ interface DecodedToken {
   email?: string;
   role?: string;
   status?: string;
-  fullname?: string;
+  fullName?: string;
   two_factor_enabled?: boolean;
   permission?: string[];
   iat?: number;

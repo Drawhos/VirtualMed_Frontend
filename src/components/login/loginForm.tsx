@@ -45,7 +45,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const LoginForm = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { decodeAndBuildUser,setToken, setRefreshToken } = useAuthStore();
+  const { decodeAndBuildUser, setToken, setRefreshToken, setTempTwoFactorToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,7 +78,7 @@ export const LoginForm = () => {
 
       // Verificar si requiere 2FA
       if ('requiresTwoFactor' in response && response.requiresTwoFactor) {
-        sessionStorage.setItem('tempTwoFactorToken', response.tempTwoFactorToken);
+        setTempTwoFactorToken(response.tempTwoFactorToken);
         router.push('/login/2fa');
         return;
       }
@@ -124,7 +124,7 @@ export const LoginForm = () => {
 
       toast({
         title: 'Bienvenido',
-        description: `Hola ${user.fullname}, iniciaste sesión exitosamente.`,
+        description: `Hola ${user.fullName}, iniciaste sesión exitosamente.`,
         variant: 'default',
       });
 

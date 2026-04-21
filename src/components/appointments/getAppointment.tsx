@@ -95,13 +95,7 @@ export default function ListAppointmentsComponent() {
       if (isAxiosError(error)) {
         const status = error.response?.status;
 
-        if (status === 401) {
-          toast({
-            title: "No autorizado",
-            description: "Tu sesión ha expirado.",
-            variant: "destructive",
-          });
-        } else if (status === 403) {
+        if (status === 403) {
           toast({
             title: "Acceso denegado",
             description: "No tienes permiso para ver estas citas.",

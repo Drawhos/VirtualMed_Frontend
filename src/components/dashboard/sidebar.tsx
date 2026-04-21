@@ -4,25 +4,118 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, CalendarCheck, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
 
-interface NavItem {
+type IconType = ComponentType<{ className?: string }>;
+
+interface NavLeafItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
   requiredPermissions?: string[];
 }
+
+interface NavLinkItem extends NavLeafItem {
+  id: string;
+  icon: IconType;
+}
+
+interface NavGroupItem {
+  id: string;
+  label: string;
+  icon: IconType;
+  requiredPermissions?: string[];
+  children: NavLeafItem[];
+}
+
+type NavItem = NavLinkItem | NavGroupItem;
+
+const DOCTOR_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'doctor-appointments',
+    label: 'Citas',
+    icon: Calendar,
+    children: [
+      { label: 'Listar citas', href: '/dashboard/doctor/appointments/list', requiredPermissions: ['Appointment:Read'] },
+      { label: 'Crear cita', href: '/dashboard/doctor/appointments/create', requiredPermissions: ['Appointment:Create'] },
+    ],
+  },
+  { id: 'doctor-patients', label: 'Pacientes', href: '/dashboard/doctor/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
+  {
+    id: 'doctor-encounters',
+    label: 'Encuentros Clínicos',
+    icon: Stethoscope,
+    children: [
+      { label: 'Nuevo encuentro', href: '/dashboard/doctor/encounters/new', requiredPermissions: ['ClinicalEncounter:Create'] },
+      { label: 'Ver encuentros', href: '/dashboard/doctor/encounters/list', requiredPermissions: ['ClinicalEncounter:Read'] },
+    ],
+  },
+];
+
+const PATIENT_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'patient-appointments',
+    label: 'Mis Citas',
+    icon: Calendar,
+    href: '/dashboard/patient/appointments/list',
+    requiredPermissions: ['Appointment:Read'] 
+  },
+  {
+    id: 'patient-medical-history',
+    label: 'Historial Médico',
+    href: '/dashboard/patient/medical-history',
+    icon: FileText,
+    requiredPermissions: ['ClinicalEncounter:Read'],
+  },
+  {
+    id: 'patient-vital-metrics',
+    label: 'Métricas Vitales',
+    href: '/dashboard/patient/vital-metrics',
+    icon: Heart,
+    requiredPermissions: ['VitalMetric:Read'],
+  },
+];
+
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  { id: 'admin-audit-logs', label: 'Logs Auditoría', href: '/dashboard/admin/audit-logs', icon: ShieldCheck },
+  {
+    id: 'admin-appointments',
+    label: 'Citas',
+    icon: Calendar,
+    children: [
+      { label: 'Listar citas', href: '/dashboard/admin/appointments/list', requiredPermissions: ['Appointment:Read'] },
+      { label: 'Crear cita', href: '/dashboard/admin/appointments/create', requiredPermissions: ['Appointment:Create'] },
+    ],
+  },
+  { id: 'admin-clinical-encounters', label: 'Actualizar Encuentros Clínicos', 
+    href: '/dashboard/admin/clinical-encounters/update', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Update']},
+];
+
+const SETTINGS_NAV_ITEM: NavLinkItem = {
+  id: 'settings',
+  label: 'Configuración',
+  href: '/dashboard/settings',
+  icon: Settings,
+};
+
+const ROLE_NAV_ITEMS: Partial<Record<UserRole, NavItem[]>> = {
+  [UserRole.DOCTOR]: DOCTOR_NAV_ITEMS,
+  [UserRole.PATIENT]: PATIENT_NAV_ITEMS,
+  [UserRole.ADMIN]: ADMIN_NAV_ITEMS,
+};
+
+const isGroupItem = (item: NavItem): item is NavGroupItem => 'children' in item;
 
 export function Sidebar() {
   const { user, _hasHydrated } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const userRole = user?.role;
 
-  // useEffect siempre se ejecuta, la condición va dentro
   useEffect(() => {
     if (!_hasHydrated) return; // Esperar hidratación
     if (!user) {
@@ -30,49 +123,68 @@ export function Sidebar() {
     }
   }, [user, router, _hasHydrated]);
 
+  const hasPermission = useCallback((requiredPermissions?: string[]): boolean => {
+    const permissions = user?.permission ?? [];
+    if (!requiredPermissions || requiredPermissions.length === 0) return true;
+    return requiredPermissions.some((p) => permissions.includes(p));
+  }, [user?.permission]);
+
+  const isActive = useCallback((href: string) => pathname === href || pathname.startsWith(href + '/'), [pathname]);
+
+  const navItems = useMemo(() => {
+    const roleItems = userRole ? (ROLE_NAV_ITEMS[userRole] ?? []) : [];
+    const allItems = [...roleItems, SETTINGS_NAV_ITEM];
+
+    return allItems
+      .map((item) => {
+        if (isGroupItem(item)) {
+          if (!hasPermission(item.requiredPermissions)) return null;
+
+          const children = item.children.filter((child) => hasPermission(child.requiredPermissions));
+          if (children.length === 0) return null;
+
+          return { ...item, children };
+        }
+
+        if (!hasPermission(item.requiredPermissions)) return null;
+        return item;
+      })
+      .filter((item): item is NavItem => item !== null);
+  }, [hasPermission, userRole]);
+
+  const isGroupActive = useCallback((item: NavGroupItem): boolean => item.children.some((child) => isActive(child.href)), [isActive]);
+
+  useEffect(() => {
+    setExpandedGroups((previousState) => {
+      const nextState = { ...previousState };
+      let hasChanges = false;
+
+      navItems.forEach((item) => {
+        if (!isGroupItem(item)) return;
+
+        if (!(item.id in nextState)) {
+          nextState[item.id] = false;
+          hasChanges = true;
+        }
+
+        if (isGroupActive(item) && !nextState[item.id]) {
+          nextState[item.id] = true;
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? nextState : previousState;
+    });
+  }, [isGroupActive, navItems]);
+
   if (!_hasHydrated || !user) return null;
 
-  const getNavItems = (): NavItem[] => {
-
-    const doctorItems: NavItem[] = [
-      { label: 'Citas', href: '/dashboard/doctor/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
-      { label: 'Crear citas', href: '/dashboard/doctor/appointments/create', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
-      { label: 'Pacientes', href: '/dashboard/doctor/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
-      { label: 'Encuentros Clínicos', href: '/dashboard/doctor/encounters/new', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Read'] },
-      { label: 'Prescripciones', href: '/dashboard/prescriptions', icon: FileText, requiredPermissions: ['Prescription:Read'] },
-    ];
-
-    const patientItems: NavItem[] = [
-      { label: 'Citas', href: '/dashboard/patient/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
-      { label: 'Historial Médico', href: '/dashboard/medical-history', icon: FileText, requiredPermissions: ['ClinicalEncounter:Read'] },
-      { label: 'Métricas Vitales', href: '/dashboard/vital-metrics', icon: Heart, requiredPermissions: ['VitalMetric:Read'] },
-    ];
-
-    const adminItems: NavItem[] = [
-      { label: 'Logs Auditoría', href: '/dashboard/admin/audit-logs', icon: ShieldCheck },
-      { label: 'Citas', href: '/dashboard/admin/appointments/list', icon: Calendar, requiredPermissions: ['Appointment:Read'] },
-      { label: 'Crear citas', href: '/dashboard/admin/appointments/create', icon: CalendarCheck, requiredPermissions: ['Appointment:Create'] },
-    ];
-
-    const settingsItems: NavItem[] = [
-      { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
-    ];
-
-    let items: NavItem[] = [];
-    if (user.role === UserRole.DOCTOR) items = [...doctorItems];
-    else if (user.role === UserRole.PATIENT) items = [...patientItems];
-    else if (user.role === UserRole.ADMIN) items = [...adminItems];
-
-    return [...items, ...settingsItems];
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((previousState) => ({
+      ...previousState,
+      [groupId]: !previousState[groupId],
+    }));
   };
-
-  const hasPermission = (requiredPermissions?: string[]): boolean => {
-    if (!requiredPermissions || requiredPermissions.length === 0) return true;
-    return requiredPermissions.some((p) => user.permission.includes(p));
-  };
-
-  const navItems = getNavItems().filter((item) => hasPermission(item.requiredPermissions));
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   return (
     <>
@@ -93,10 +205,58 @@ export function Sidebar() {
         <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
           {navItems.map((item) => {
             const Icon = item.icon;
+
+            if (isGroupItem(item)) {
+              const groupActive = isGroupActive(item);
+              const expanded = expandedGroups[item.id] ?? false;
+
+              return (
+                <div key={item.id} className="space-y-1">
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    onClick={() => toggleGroup(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left transition-colors duration-200 ${
+                      groupActive ? 'bg-blue-50 font-semibold text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-sm">{item.label}</span>
+                    <ChevronDown className={`ml-auto h-4 w-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <div className={`grid transition-all duration-200 ease-in-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                      <div className="ml-9 space-y-1 border-l border-gray-200 pl-3">
+                        {item.children.map((child) => {
+                          const childActive = isActive(child.href);
+
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={() => setIsOpen(false)}
+                              className={`flex items-center rounded-md px-3 py-2 text-sm transition-colors duration-200 ${
+                                childActive ? 'font-medium text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                              }`}
+                            >
+                              <span>{child.label}</span>
+                              {childActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             const active = isActive(item.href);
+
             return (
               <Link
-                key={item.href}
+                key={item.id}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 rounded-lg px-4 py-2.5 transition-colors duration-200 ${

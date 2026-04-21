@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { AuthResponse } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7018/api';
+const SESSION_EXPIRED_LOGIN_PATH = '/login?reason=session-expired';
 let isRefreshing = false; // evita múltiples refresh simultáneos
 let failedQueue: { resolve: Function; reject: Function }[] = [];
 
@@ -71,7 +72,7 @@ apiClient.interceptors.response.use(
       if (!refreshToken) {
         // Sin refreshToken → logout directo
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        window.location.href = SESSION_EXPIRED_LOGIN_PATH;
         return Promise.reject(error);
       }
 
@@ -101,7 +102,7 @@ apiClient.interceptors.response.use(
         // El refresh falló → sesión expirada definitivamente
         processQueue(refreshError as AxiosError, null);
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        window.location.href = SESSION_EXPIRED_LOGIN_PATH;
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

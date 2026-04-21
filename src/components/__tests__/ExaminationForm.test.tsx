@@ -8,13 +8,14 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import { AppointmentStatus } from '@/constants/appointmentStatus';
 import { DiagnosisType } from '@/constants/diagnosisType';
+import { EncounterType } from '@/constants/encounterType';
 import axios from 'axios';
 import type { AppointmentGetResponse } from '@/types';
 
 vi.mock('@/lib/api/doctor.service', () => ({
   doctorService: {
     getAppointments: vi.fn(),
-    getApppointment: vi.fn(),
+    getAppointment: vi.fn(),
     createClinicalEncounter: vi.fn(),
   },
 }));
@@ -50,7 +51,7 @@ describe('ExaminationForm', () => {
     (useRouter as any).mockReturnValue({ push: mockPush, back: mockBack });
     (useAuthStore as any).mockReturnValue({ user: { sub: 'doctor-1' } });
     vi.mocked(doctorService.getAppointments).mockResolvedValue([mockAppointment]);
-    vi.mocked(doctorService.getApppointment).mockResolvedValue(mockAppointment);
+    vi.mocked(doctorService.getAppointment).mockResolvedValue(mockAppointment);
     vi.mocked(doctorService.createClinicalEncounter).mockResolvedValue({ id: 'encounter-1' });
   });
 
@@ -163,20 +164,23 @@ describe('ExaminationForm', () => {
       render(<ExaminationForm />);
 
       await fillValidForm(user);
+      const today = new Date().toISOString().split('T')[0];
+      const expectedStartAt = new Date(`${today}T10:00`).toISOString();
+      const expectedEndAt = new Date(`${today}T11:00`).toISOString();
 
       fireEvent.submit(document.querySelector('form')!);
 
       await waitFor(() => {
-        expect(doctorService.getApppointment).toHaveBeenCalledWith('apt-1');
+        expect(doctorService.getAppointment).toHaveBeenCalledWith('apt-1');
       });
 
       await waitFor(() => {
         expect(doctorService.createClinicalEncounter).toHaveBeenCalledWith(
           expect.objectContaining({
             appointmentId: 'apt-1',
-            encounterType: 0,
-            startAt: expect.any(String),
-            endAt: expect.any(String),
+            encounterType: EncounterType.Consultation,
+            startAt: expectedStartAt,
+            endAt: expectedEndAt,
             chiefComplaint: 'Dolor de cabeza intenso',
             currentCondition: null,
             physicalExam: null,

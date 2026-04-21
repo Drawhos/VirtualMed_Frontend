@@ -42,21 +42,21 @@ const mockPatientToken = {
 };
 
 const mockPatientUser = {
-  fullname: 'Juan Pérez',
+  fullName: 'Juan Pérez',
   role: UserRole.PATIENT,
   status: UserStatus.ACTIVE,
 };
 
 const mockDoctorUser = {
-  fullname: 'Dra. García',
+  fullName: 'Dra. García',
   role: UserRole.DOCTOR,
   status: UserStatus.ACTIVE,
 };
 
 const mockAdminUser = {
-  fullname: 'Admin Root',
+  fullName: 'Admin Root',
   role: UserRole.ADMIN,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 // ============================================================================
@@ -68,6 +68,7 @@ describe('LoginForm', () => {
   const mockPush = vi.fn();
   const mockSetToken = vi.fn();
   const mockSetRefreshToken = vi.fn();
+  const mockSetTempTwoFactorToken = vi.fn();
   const mockDecodeAndBuildUser = vi.fn();
   const localStorageSetItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
   const localStorageRemoveItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {});
@@ -84,6 +85,7 @@ describe('LoginForm', () => {
     vi.mocked(useAuthStore).mockReturnValue({
       setToken: mockSetToken,
       setRefreshToken: mockSetRefreshToken,
+      setTempTwoFactorToken: mockSetTempTwoFactorToken,
       decodeAndBuildUser: mockDecodeAndBuildUser,
     } as any);
 
@@ -282,6 +284,8 @@ describe('LoginForm', () => {
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/login/2fa');
       });
+
+      expect(mockSetTempTwoFactorToken).toHaveBeenCalledWith('temp-token-123');
     });
 
     it('debe mostrar error de cuenta inactiva', async () => {

@@ -2,9 +2,9 @@
 
 import { useAuthStore } from '@/store/auth.store';
 import { UserRole } from '@/constants/userRole';
-import { PrescriptionForm } from '@/components/clinicalEncounters/prescriptionForm';
+import { ListEncountersForm } from '@/components/clinicalEncounters/getClinicalEncountersForm';
 
-export default function PrescriptionsPage() {
+export default function ListEncounterPage() {
   const { user } = useAuthStore();
 
   // Si no es doctor, no renderizar
@@ -12,5 +12,5 @@ export default function PrescriptionsPage() {
     return null;
   }
 
-  return <PrescriptionForm />;
+  return <ListEncountersForm />;
 }

@@ -643,26 +643,6 @@ describe('ListAppointmentsComponent', () => {
   // Manejo de errores HTTP
   // ============================================
   describe('Manejo de errores HTTP', () => {
-    it('debe mostrar error 401 al buscar citas', async () => {
-      const axiosError = {
-        isAxiosError: true,
-        response: { status: 401 },
-      };
-      vi.mocked(doctorService.getAppointments).mockRejectedValue(axiosError);
-
-      render(<ListAppointmentsComponent mode="admin" />);
-
-      await fillDatesAndSearch('2025-04-01', '2025-04-30');
-
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'No autorizado',
-          description: 'Tu sesión ha expirado.',
-          variant: 'destructive',
-        });
-      });
-    });
-
     it('debe mostrar error 403 al buscar citas', async () => {
       const axiosError = {
         isAxiosError: true,
