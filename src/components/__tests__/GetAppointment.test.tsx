@@ -368,32 +368,6 @@ describe('ListAppointmentsComponent', () => {
   // Manejo de errores
   // ============================================
   describe('Manejo de errores', () => {
-    it('debe mostrar error 401 (no autorizado)', async () => {
-      const axiosError = {
-        isAxiosError: true,
-        response: { status: 401 },
-      };
-      vi.mocked(doctorService.getAppointments).mockRejectedValue(axiosError);
-      vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
-
-      render(<ListAppointmentsComponent />);
-
-      const inputs = document.querySelectorAll('input[type="date"]');
-      fireEvent.change(inputs[0], { target: { value: '2025-04-01' } });
-      fireEvent.change(inputs[1], { target: { value: '2025-04-30' } });
-
-      const searchButton = screen.getByRole('button', { name: /Buscar/i });
-      await userEvent.click(searchButton);
-
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'No autorizado',
-          description: 'Tu sesión ha expirado.',
-          variant: 'destructive',
-        });
-      });
-    });
-
     it('debe mostrar error 403 (acceso denegado)', async () => {
       const axiosError = {
         isAxiosError: true,

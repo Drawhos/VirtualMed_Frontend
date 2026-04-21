@@ -135,7 +135,7 @@ describe('useAuthStore', () => {
       expect(state.user?.sub).toBe('user-123');
       expect(state.user?.email).toBe('test@example.com');
       expect(state.user?.role).toBe(UserRole.PATIENT);
-      expect(state.user?.fullname).toBe('Juan Pérez');
+      expect(state.user?.fullName).toBe('Juan Pérez');
     });
 
     it('debe retornar el usuario decodificado', () => {

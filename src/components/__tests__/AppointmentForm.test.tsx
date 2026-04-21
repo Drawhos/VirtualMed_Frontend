@@ -60,7 +60,7 @@ const mockUser = {
   sub: 'user-123',
   email: 'admin@test.com',
   role: UserRole.ADMIN,
-  fullname: 'Admin User',
+  fullName: 'Admin User',
   status: UserStatus.ACTIVE,
   email_verified: true,
   two_factor_enabled: false,
@@ -507,31 +507,6 @@ describe('AppointmentForm', () => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
             title: 'Error de validación',
-            variant: 'destructive',
-          })
-        );
-      });
-    });
-
-    it('debe manejar error 401 de sesión expirada', async () => {
-      const axiosError = new axios.AxiosError('Unauthorized', '401', undefined, undefined, {
-        status: 401,
-        data: {},
-      } as any);
-      vi.mocked(doctorService.createAppointment).mockRejectedValueOnce(axiosError);
-
-      const user = userEvent.setup();
-      render(<AppointmentForm mode="doctor" />);
-
-      await fillFormValidData(user, 'doctor');
-
-      fireEvent.submit(document.querySelector('form')!);
-
-      await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith(
-          expect.objectContaining({
-            title: 'No autorizado',
-            description: 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.',
             variant: 'destructive',
           })
         );

@@ -96,7 +96,7 @@ export function PrescriptionForm() {
           dosage: line.dosage,
           frequency: line.frequency,
           durationDays: line.durationDays,
-          instructions: line.instructions || undefined
+          instructions: line.instructions || null
         }))
       };
 

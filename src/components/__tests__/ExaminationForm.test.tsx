@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import { AppointmentStatus } from '@/constants/appointmentStatus';
 import { DiagnosisType } from '@/constants/diagnosisType';
+import { EncounterType } from '@/constants/encounterType';
 import axios from 'axios';
 import type { AppointmentGetResponse } from '@/types';
 
@@ -163,6 +164,9 @@ describe('ExaminationForm', () => {
       render(<ExaminationForm />);
 
       await fillValidForm(user);
+      const today = new Date().toISOString().split('T')[0];
+      const expectedStartAt = new Date(`${today}T10:00`).toISOString();
+      const expectedEndAt = new Date(`${today}T11:00`).toISOString();
 
       fireEvent.submit(document.querySelector('form')!);
 
@@ -174,9 +178,9 @@ describe('ExaminationForm', () => {
         expect(doctorService.createClinicalEncounter).toHaveBeenCalledWith(
           expect.objectContaining({
             appointmentId: 'apt-1',
-            encounterType: 0,
-            startAt: expect.any(String),
-            endAt: expect.any(String),
+            encounterType: EncounterType.Consultation,
+            startAt: expectedStartAt,
+            endAt: expectedEndAt,
             chiefComplaint: 'Dolor de cabeza intenso',
             currentCondition: null,
             physicalExam: null,

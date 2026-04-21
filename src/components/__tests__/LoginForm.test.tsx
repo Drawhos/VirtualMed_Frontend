@@ -42,21 +42,21 @@ const mockPatientToken = {
 };
 
 const mockPatientUser = {
-  fullname: 'Juan Pérez',
+  fullName: 'Juan Pérez',
   role: UserRole.PATIENT,
   status: UserStatus.ACTIVE,
 };
 
 const mockDoctorUser = {
-  fullname: 'Dra. García',
+  fullName: 'Dra. García',
   role: UserRole.DOCTOR,
   status: UserStatus.ACTIVE,
 };
 
 const mockAdminUser = {
-  fullname: 'Admin Root',
+  fullName: 'Admin Root',
   role: UserRole.ADMIN,
-  status: 'Active',
+  status: UserStatus.ACTIVE,
 };
 
 // ============================================================================

@@ -10,7 +10,7 @@ export interface User {
   sub: string;
   email: string;
   role: UserRole;
-  fullname: string;
+  fullName: string;
   status: UserStatus;
   email_verified: boolean;
   two_factor_enabled: boolean;
@@ -24,12 +24,15 @@ export interface User {
 // PATIENT TYPES
 // ============================================
 export interface Patient extends User {
+  document: string;
+  identificationType: IdentificationType;
   dateOfBirth: string;
   gender: string;
   bloodType?: string;
   allergies?: string[];
-  chronicConditions?: string[];
-  emergencyContact?: EmergencyContact;
+  phoneNumber?: string;
+  acceptPrivacy?: boolean;
+  authorizeData?: boolean;
 }
 
 export interface EmergencyContact {
@@ -207,6 +210,16 @@ export interface AuditLogsResponse {
 // ============================================
 // CLINICAL ENCOUNTER TYPES
 // ============================================
+export interface DiagnosisInput {
+  icd10Code: string;
+  description: string;
+  type: DiagnosisType;
+}
+
+export interface Diagnosis extends DiagnosisInput {
+  id: string;
+}
+
 export interface ClinicalEncounter {
   appointmentId: string;
   encounterType: EncounterType;
@@ -219,15 +232,26 @@ export interface ClinicalEncounter {
   plan?: string | null,
   notes?: string | null,
   recordingUrl?: string | null,
-  diagnoses: Array<{
-    icd10Code: string,
-    description: string,
-    type: DiagnosisType
-  }>
+  isLocked?: boolean;
+  diagnoses: Array<DiagnosisInput>
 }
 
 export interface ClinicalEncounterResponse {
   id: string;  
+}
+
+export interface DetailedClinicalEncounter extends Omit<ClinicalEncounter, 'diagnoses'> {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  diagnoses: Array<Diagnosis>;
+  prescriptions?: Array<{
+    id: string;
+    prescriptionNumber: string;
+    issuedAt: string;
+    validUntil: string;
+    medications: Array<Medication>;
+  }> | null;
 }
 
 export interface Prescription {
@@ -235,12 +259,14 @@ export interface Prescription {
   issuedAt: string,
   validUntil: string,
   doctorSignatureHash?: string | null,
-  lines: Array<{
-      medicationId?: string | null, // El ID del medicamento se asignará en el backend
-      medicationName: string,
-      dosage: string,
-      frequency: string,
-      durationDays: number,
-      instructions?: string | null
-    }>
+  lines: Array<Medication>
+}
+
+export interface Medication {
+  medicationId?: string | null, // El ID del medicamento se asignará en el backend
+  medicationName: string,
+  dosage: string,
+  frequency: string,
+  durationDays: number,
+  instructions?: string | null
 }

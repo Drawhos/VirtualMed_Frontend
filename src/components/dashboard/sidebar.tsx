@@ -42,14 +42,14 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
       { label: 'Crear cita', href: '/dashboard/doctor/appointments/create', requiredPermissions: ['Appointment:Create'] },
     ],
   },
-  { id: 'doctor-patients', label: 'Pacientes', href: '/dashboard/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
+  { id: 'doctor-patients', label: 'Pacientes', href: '/dashboard/doctor/patients', icon: Users, requiredPermissions: ['Patient:Read'] },
   {
     id: 'doctor-encounters',
     label: 'Encuentros Clínicos',
     icon: Stethoscope,
     children: [
-      { label: 'Nuevo encuentro', href: '/dashboard/doctor/encounters/new', requiredPermissions: ['ClinicalEncounter:Read'] },
-      { label: 'Prescripciones', href: '/dashboard/doctor/encounters/prescriptions', requiredPermissions: ['Prescription:Read'] },
+      { label: 'Nuevo encuentro', href: '/dashboard/doctor/encounters/new', requiredPermissions: ['ClinicalEncounter:Create'] },
+      { label: 'Ver encuentros', href: '/dashboard/doctor/encounters/list', requiredPermissions: ['ClinicalEncounter:Read'] },
     ],
   },
 ];
@@ -65,14 +65,14 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
   {
     id: 'patient-medical-history',
     label: 'Historial Médico',
-    href: '/dashboard/medical-history',
+    href: '/dashboard/patient/medical-history',
     icon: FileText,
     requiredPermissions: ['ClinicalEncounter:Read'],
   },
   {
     id: 'patient-vital-metrics',
     label: 'Métricas Vitales',
-    href: '/dashboard/vital-metrics',
+    href: '/dashboard/patient/vital-metrics',
     icon: Heart,
     requiredPermissions: ['VitalMetric:Read'],
   },
@@ -89,6 +89,8 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Crear cita', href: '/dashboard/admin/appointments/create', requiredPermissions: ['Appointment:Create'] },
     ],
   },
+  { id: 'admin-clinical-encounters', label: 'Actualizar Encuentros Clínicos', 
+    href: '/dashboard/admin/clinical-encounters/update', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Update']},
 ];
 
 const SETTINGS_NAV_ITEM: NavLinkItem = {

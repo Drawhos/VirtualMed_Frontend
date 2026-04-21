@@ -24,8 +24,7 @@ export function Header() {
 
   if (!user) return null;
 
-    const initials = user.fullname
-    .split(' ')
+    const initials = user.fullName.split(' ')
     .map((word) => word[0])
     .join('')
     .toUpperCase()
@@ -58,7 +57,7 @@ export function Header() {
               </div>
 
               <div className="hidden text-left sm:block">
-                <p className="text-sm font-semibold text-gray-900">{user.fullname}</p>
+                <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                 <p className="text-xs text-gray-500">{user.role}</p>
               </div>
             </Button>
@@ -67,7 +66,7 @@ export function Header() {
           <DropdownMenuContent align="end" className="w-56">
             {/* User Info Section */}
             <div className="px-2 py-1.5">
-              <p className="text-sm font-semibold text-gray-900">{user.fullname}</p>
+              <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
               <p className="text-xs text-gray-500">{user.email}</p>
               <div className="mt-2 flex items-center gap-2">
                 <span

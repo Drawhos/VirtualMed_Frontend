@@ -277,10 +277,6 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
             title: "Error de validación",
             description: error.response?.data?.message || "Datos inválidos",
           },
-          401: {
-            title: "No autorizado",
-            description: "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
-          },
           403: {
             title: "Acceso denegado",
             description: "No tienes permiso para crear citas.",

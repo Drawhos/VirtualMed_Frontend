@@ -124,7 +124,7 @@ export const LoginForm = () => {
 
       toast({
         title: 'Bienvenido',
-        description: `Hola ${user.fullname}, iniciaste sesión exitosamente.`,
+        description: `Hola ${user.fullName}, iniciaste sesión exitosamente.`,
         variant: 'default',
       });
 

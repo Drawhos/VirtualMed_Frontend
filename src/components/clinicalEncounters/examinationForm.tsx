@@ -32,6 +32,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { DiagnosisType } from '@/constants/diagnosisType';
 import { AppointmentGetResponse } from '@/types';
+import { EncounterType } from '@/constants/encounterType';
 
 // ============================================
 // Códigos CIE-10 comunes (expandible)
@@ -63,7 +64,8 @@ const diagnosisSchema = z.object({
 const examinationFormSchema = z
   .object({
     appointmentId: z.string().min(1, 'Debes seleccionar una cita'),
-    encounterType: z.enum(['0', '1', '2', '3', '4'], {
+    encounterType: z.enum([EncounterType.Consultation, EncounterType.FollowUp, 
+      EncounterType.Emergency, EncounterType.Telehealth, EncounterType.Other], {
       errorMap: () => ({ message: 'Tipo de consulta requerido' }),
     }),
     startAt: z
@@ -100,7 +102,7 @@ const examinationFormSchema = z
         const startTime = new Date(`2000-01-01T${data.startAt}`);
         const endTime = new Date(`2000-01-01T${data.endAt}`);
         const diffHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        return diffHours > 0 && diffHours <= 3;  // ← cambiado de 12 a 3
+        return diffHours > 0 && diffHours <= 3;
     },
     {
         message: 'La hora de fin debe ser posterior a la hora de inicio y no puede exceder 3 horas',
@@ -129,7 +131,7 @@ export function ExaminationForm() {
     mode: 'onChange',
     defaultValues: {
       appointmentId: '',
-      encounterType: '0',
+      encounterType: EncounterType.Consultation,
       startAt: '',
       endAt: '',
       chiefComplaint: '',
@@ -197,12 +199,13 @@ export function ExaminationForm() {
 
     try {
       const appointmentId = await doctorService.getApppointment(values.appointmentId).then(res => res.id);
+      const today = new Date().toISOString().split('T')[0];
       
       const payload = {
         appointmentId: appointmentId,
-        encounterType: parseInt(values.encounterType),
-        startAt: new Date(`2000-01-01T${values.startAt}`).toISOString(),
-        endAt: new Date(`2000-01-01T${values.endAt}`).toISOString(),
+        encounterType: values.encounterType as EncounterType,
+        startAt: new Date(`${today}T${values.startAt}`).toISOString(),
+        endAt:   new Date(`${today}T${values.endAt}`).toISOString(),
         chiefComplaint: values.chiefComplaint,
         currentCondition: values.currentCondition || null,
         physicalExam: values.physicalExam || null,
@@ -378,11 +381,11 @@ export function ExaminationForm() {
                             <SelectValue placeholder="Selecciona tipo de consulta" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="0">Consulta General</SelectItem>
-                            <SelectItem value="1">Seguimiento</SelectItem>
-                            <SelectItem value="2">Emergencia</SelectItem>
-                            <SelectItem value="3">Telemedicina</SelectItem>
-                            <SelectItem value="4">Otro</SelectItem>
+                            <SelectItem value={EncounterType.Consultation}>Consulta General</SelectItem>
+                            <SelectItem value={EncounterType.FollowUp}>Seguimiento</SelectItem>
+                            <SelectItem value={EncounterType.Emergency}>Emergencia</SelectItem>
+                            <SelectItem value={EncounterType.Telehealth}>Telemedicina</SelectItem>
+                            <SelectItem value={EncounterType.Other}>Otro</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>

@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>()(
           sub: decoded.sub!,
           email: decoded.email!,
           role: decoded.role as UserRole,
-          fullname: decoded.fullname!,
+          fullName: decoded.fullname!,
           status: decoded.status as UserStatus.ACTIVE | UserStatus.PENDING | UserStatus.INACTIVE,
           email_verified: decoded.email_verified ?? false,
           two_factor_enabled: decoded.two_factor_enabled ?? false,
