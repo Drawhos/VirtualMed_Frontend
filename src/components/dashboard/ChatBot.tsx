@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Send, Loader } from 'lucide-react';
 import { MarkdownContent } from '@/components/MarkdownContent';
 import { chatbotService, type ChatbotSource } from '@/lib/api/chatbot.service';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Message {
   id: string;
@@ -105,41 +106,52 @@ export function ChatBot() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${
-              message.type === 'user' ? 'justify-end' : 'justify-start'
-            }`}
-          >
+            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-lg ${
-                message.type === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}
+              className={`flex items-end space-x-3 ${
+                message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              } w-full`}
             >
-              {message.type === 'user' ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                  {message.content}
-                </p>
-              ) : (
-                <div className="text-sm leading-relaxed break-words">
-                  <MarkdownContent content={message.content} />
-                </div>
-              )}
+              {/* Avatar */}
+              <div className="flex-shrink-0">
+                <Avatar>
+                  {/* If you have images, use AvatarImage src prop */}
+                  {message.type === 'user' ? (
+                    <AvatarFallback>U</AvatarFallback>
+                  ) : (
+                    <AvatarFallback>VM</AvatarFallback>
+                  )}
+                </Avatar>
+              </div>
 
-              {/* Sources */}
-              {message.sources && message.sources.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-300 space-y-1">
-                  <p className="text-xs font-semibold opacity-75">Fuentes:</p>
-                  {message.sources.map((source, idx) => (
-                    <div key={idx} className="text-xs opacity-75">
-                      <span>📄 {source.file_name}</span>
-                      {source.page_label && (
-                        <span> - Página(s): {source.page_label}</span>
-                      )}
+              {/* Bubble */}
+              <div className="max-w-[80%] sm:max-w-[70%] lg:max-w-[60%]">
+                <div
+                  className={`px-4 py-3 rounded-lg break-words ${
+                    message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  {message.type === 'user' ? (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <div className="text-sm leading-relaxed">
+                      <MarkdownContent content={message.content} />
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+
+                {/* Sources */}
+                {message.sources && message.sources.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {message.sources.map((source, idx) => (
+                      <div key={idx} className="opacity-80">
+                        <span>📄 {source.file_name}</span>
+                        {source.page_label && <span> - Página(s): {source.page_label}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
