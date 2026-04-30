@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import { Loader2, Search } from "lucide-react";
 
@@ -43,9 +44,12 @@ interface Filters {
 // ============================================
 export default function ListAppointmentsComponent() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentGetResponse[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<AppointmentGetResponse[]>([]);
+  const [sessionIds, setSessionIds] = useState<Record<string, string>>({});
+  const [joiningAppointmentId, setJoiningAppointmentId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     fromDate: "",
     toDate: "",
@@ -153,6 +157,44 @@ export default function ListAppointmentsComponent() {
     setFilters({ fromDate: "", toDate: "", status: "" });
     setAppointments([]);
     setFilteredAppointments([]);
+    setSessionIds({});
+  };
+
+  const handleSessionIdChange = (appointmentId: string, value: string) => {
+    setSessionIds((previous) => ({
+      ...previous,
+      [appointmentId]: value,
+    }));
+  };
+
+  const handleJoinVideoSession = async (appointmentId: string) => {
+    const sessionId = sessionIds[appointmentId]?.trim();
+    if (!sessionId) {
+      toast({
+        title: "Session ID requerido",
+        description: "Ingresa el sessionId antes de unirte.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setJoiningAppointmentId(appointmentId);
+    try {
+      await doctorService.postIceCredentials(sessionId);
+      router.push(`/dashboard/video-session/${sessionId}`);
+    } catch (error) {
+      const description = isAxiosError(error)
+        ? error.response?.data?.message || "No se pudo iniciar la videollamada."
+        : "No se pudo iniciar la videollamada.";
+
+      toast({
+        title: "Error",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setJoiningAppointmentId(null);
+    }
   };
 
   return (
@@ -262,6 +304,7 @@ export default function ListAppointmentsComponent() {
                     <TableHead>Duración (min)</TableHead>
                     <TableHead>Razón</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Videollamada</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -290,6 +333,28 @@ export default function ListAppointmentsComponent() {
                         <Badge variant={getStatusBadgeVariant(appointment.status)}>
                           {getStatusBadgeName(appointment.status)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex w-full min-w-[220px] flex-col gap-2 sm:flex-row sm:items-center">
+                          <Input
+                            value={sessionIds[appointment.id] ?? ""}
+                            onChange={(event) =>
+                              handleSessionIdChange(appointment.id, event.target.value)
+                            }
+                            placeholder="Session ID"
+                            className="h-9"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleJoinVideoSession(appointment.id)}
+                            disabled={joiningAppointmentId === appointment.id}
+                          >
+                            {joiningAppointmentId === appointment.id && (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            Unirse
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

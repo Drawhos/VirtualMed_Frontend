@@ -3,7 +3,10 @@ import { EncounterType } from '@/constants/encounterType';
 import apiClient from './axios';
 import { Appointment, AppointmentResponse, DoctorResponse, AppointmentGetResponse, 
     DoctorSearch, ClinicalEncounter, ClinicalEncounterResponse, Prescription, 
-    DetailedClinicalEncounter } from '@/types';
+    DetailedClinicalEncounter, 
+    VideoSession,
+    IceCredentials,
+    VideoChatMessage} from '@/types';
 
 export const doctorService = {
     // DOCTORES
@@ -60,6 +63,31 @@ export const doctorService = {
     },
     getDetailedClinicalEncounter: async (clinicalEncounterId: string): Promise<DetailedClinicalEncounter> => {
         const response = await apiClient.get<DetailedClinicalEncounter>(`/clinical-encounters/${clinicalEncounterId}`);
+        return response.data;
+    },
+    postVideoSession: async (data: {
+        appointmentId: string;
+    }): Promise<VideoSession> => {
+        const response = await apiClient.post<VideoSession>('/video-sessions', data);
+        return response.data;
+    },
+    getVideoSession: async (sessionId: string): Promise<VideoSession> => {
+        const response = await apiClient.get<VideoSession>(`/video-sessions/${sessionId}`);
+        return response.data;
+    },
+    postStartVideoSession: async (sessionId: string): Promise<void> => {
+        await apiClient.post(`/video-sessions/${sessionId}/start`);
+    },
+    postEndVideoSession: async (sessionId: string, endReason: string | null): Promise<VideoSession> => {
+        const response = await apiClient.post(`/video-sessions/${sessionId}/end`, { endReason });
+        return response.data;
+    },
+    postIceCredentials: async (sessionId: string): Promise<IceCredentials> => {
+        const response = await apiClient.post(`/video-sessions/${sessionId}/refresh-token`);
+        return response.data;
+    },
+    getChatHistory: async (sessionId: string): Promise<VideoChatMessage[]> => {
+        const response = await apiClient.get<VideoChatMessage[]>(`/video-sessions/${sessionId}/chat-history`);
         return response.data;
     }
 }
