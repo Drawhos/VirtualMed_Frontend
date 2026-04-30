@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -68,6 +68,12 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     href: '/dashboard/patient/medical-history',
     icon: FileText,
     requiredPermissions: ['ClinicalEncounter:Read'],
+  },
+  {
+    id: 'patient-chat',
+    label: 'Asistente',
+    icon: MessageCircle,
+    href: '/dashboard/patient/chat',
   },
   {
     id: 'patient-vital-metrics',
