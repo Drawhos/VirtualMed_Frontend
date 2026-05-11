@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	HubConnection,
 	HubConnectionBuilder,
@@ -137,18 +137,19 @@ export function useSignalR(sessionId: string) {
 	useEffect(() => {
 		if (!sessionId) return undefined;
 
+		let cancelled = false;
+
 		const connection = new HubConnectionBuilder()
 			.withUrl("http://localhost:5045/hubs/video-chat",
 				{
 					accessTokenFactory: () => {
 						const token = getCookie('token');
-						console.log('SignalR token:', token ? 'presente' : 'VACÍO');
 						return token ?? "";
 					},
-    				withCredentials: false,
+					withCredentials: false,
 				}
 			)
-			
+
 			.withAutomaticReconnect()
 			.build();
 
@@ -168,6 +169,7 @@ export function useSignalR(sessionId: string) {
 		});
 		connection.on("joinedRoom", (payload: JoinedRoomPayload) => {
 			setIsJoined(true);
+			setError(null);
 			joinedHandlerRef.current?.(payload);
 		});
 
@@ -180,6 +182,7 @@ export function useSignalR(sessionId: string) {
 			try {
 				await connection.invoke("JoinRoom", sessionId);
 				setIsJoined(true);
+				setError(null);
 			} catch (err) {
 				setError("No fue posible reconectar al chat.");
 			}
@@ -192,20 +195,37 @@ export function useSignalR(sessionId: string) {
 
 		const startConnection = async () => {
 			try {
+				setError(null);
 				setStatus("connecting");
 				await connection.start();
+
+				if (cancelled) return;
+
 				setStatus(mapStatus(connection.state));
-				await connection.invoke("JoinRoom", sessionId);
-				setIsJoined(true);
+				try {
+					await connection.invoke("JoinRoom", sessionId);
+					setIsJoined(true);
+					setError(null);
+				} catch {
+					if (!cancelled) {
+						setError("No fue posible unir la sala de chat.");
+					}
+				}
 			} catch (err) {
-				setError("No se pudo conectar al chat en tiempo real.");
-				setStatus(mapStatus(connection.state));
+				if (!cancelled) {
+					const msg = err instanceof Error ? err.message : "";
+					if (!msg.includes("stopped during negotiation")) {
+						setError("No se pudo conectar al chat en tiempo real.");
+					}
+					setStatus(mapStatus(connection.state));
+				}
 			}
 		};
 
 		startConnection();
 
 		return () => {
+			cancelled = true;
 			const teardown = async () => {
 				try {
 					if (connection.state === HubConnectionState.Connected) {
@@ -221,20 +241,37 @@ export function useSignalR(sessionId: string) {
 		};
 	}, [sessionId]);
 
-	return {
-		status,
-		isConnected: status === "connected",
-		isJoined,
-		error,
-		sendOffer,
-		sendAnswer,
-		sendIceCandidate,
-		sendMessage,
-		onOffer,
-		onAnswer,
-		onIceCandidate,
-		onMessageReceived,
-		onJoinedRoom,
-		leaveRoom,
-	};
+	return useMemo(
+		() => ({
+			status,
+			isConnected: status === "connected",
+			isJoined,
+			error,
+			sendOffer,
+			sendAnswer,
+			sendIceCandidate,
+			sendMessage,
+			onOffer,
+			onAnswer,
+			onIceCandidate,
+			onMessageReceived,
+			onJoinedRoom,
+			leaveRoom,
+		}),
+		[
+			status,
+			isJoined,
+			error,
+			sendOffer,
+			sendAnswer,
+			sendIceCandidate,
+			sendMessage,
+			onOffer,
+			onAnswer,
+			onIceCandidate,
+			onMessageReceived,
+			onJoinedRoom,
+			leaveRoom,
+		]
+	);
 }

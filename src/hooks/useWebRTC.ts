@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type WebRtcRole = "doctor" | "patient";
 
@@ -18,6 +18,7 @@ type SignalRClient = {
 	onIceCandidate: (
 		handler: ((payload: { candidate: RTCIceCandidateInit }) => void) | null
 	) => void;
+	onJoinedRoom: (handler: ((payload: { sessionId: string }) => void) | null) => void;
 };
 
 export function useWebRTC(
@@ -27,35 +28,78 @@ export function useWebRTC(
 	signalR: SignalRClient | null
 ) {
 	const peerRef = useRef<RTCPeerConnection | null>(null);
+	const signalRRef = useRef<SignalRClient | null>(null);
 	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 	const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 	const [connectionState, setConnectionState] = useState<RTCPeerConnectionState>("new");
+	const [mediaError, setMediaError] = useState<string | null>(null);
 	const pendingOfferRef = useRef<RTCSessionDescriptionInit | null>(null);
 	const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 	const offerSentRef = useRef(false);
+	const answerReceivedRef = useRef(false);
+
+	const sendOffer = async (force = false) => {
+		const peer = peerRef.current;
+		const sr = signalRRef.current;
+		if (!peer || !sr || role !== "doctor") return;
+		if (peer.signalingState !== "stable") return;
+		if (peer.connectionState === "connected" && answerReceivedRef.current) return;
+		if (!force && offerSentRef.current) return;
+
+		try {
+			const offer = await peer.createOffer();
+			await peer.setLocalDescription(offer);
+			if (peer.localDescription) {
+				await sr.sendOffer(sessionId, peer.localDescription);
+				offerSentRef.current = true;
+			}
+		} catch {
+			// noop
+		}
+	};
+	useEffect(() => {
+		signalRRef.current = signalR;
+	}, [signalR]);
 
 	useEffect(() => {
 		if (!sessionId || !iceServers.length) return undefined;
 
 		let isCancelled = false;
+		setMediaError(null);
 
 		const setupPeer = async () => {
+			// Intentar obtener cámara/micrófono, pero continuar sin ellos si falla
+			let stream: MediaStream | null = null;
 			try {
-				const stream = await navigator.mediaDevices.getUserMedia({
-					audio: true,
-					video: true,
-				});
-				if (isCancelled) return;
+				stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+			} catch (err) {
+				const message =
+					err instanceof DOMException && err.name === "NotReadableError"
+						? "La cámara o micrófono está en uso por otra aplicación."
+						: err instanceof DOMException && err.name === "NotAllowedError"
+							? "No se concedió permiso para acceder a la cámara."
+							: "No se pudo acceder a la cámara o micrófono.";
+				if (!isCancelled) setMediaError(message);
+			}
 
-				setLocalStream(stream);
+			if (isCancelled) {
+				stream?.getTracks().forEach((t) => t.stop());
+				return;
+			}
 
+			if (stream) setLocalStream(stream);
+
+			try {
 				const peer = new RTCPeerConnection({ iceServers });
 				peerRef.current = peer;
 				offerSentRef.current = false;
+				answerReceivedRef.current = false;
 
-				stream.getTracks().forEach((track) => {
-					peer.addTrack(track, stream);
-				});
+				if (stream) {
+					stream.getTracks().forEach((track) => {
+						peer.addTrack(track, stream);
+					});
+				}
 
 				peer.ontrack = (event) => {
 					const [firstStream] = event.streams;
@@ -72,8 +116,8 @@ export function useWebRTC(
 				};
 
 				peer.onicecandidate = (event) => {
-					if (!event.candidate || !signalR) return;
-					signalR.sendIceCandidate(sessionId, event.candidate.toJSON());
+					if (!event.candidate || !signalRRef.current) return;
+					signalRRef.current.sendIceCandidate(sessionId, event.candidate.toJSON());
 				};
 
 				peer.onconnectionstatechange = () => {
@@ -86,12 +130,26 @@ export function useWebRTC(
 					await peer.setRemoteDescription(new RTCSessionDescription(offer));
 					const answer = await peer.createAnswer();
 					await peer.setLocalDescription(answer);
-					if (peer.localDescription && signalR) {
-						await signalR.sendAnswer(sessionId, peer.localDescription);
+					if (peer.localDescription && signalRRef.current) {
+						await signalRRef.current.sendAnswer(sessionId, peer.localDescription);
 					}
 				}
-			} catch {
-				setConnectionState("failed");
+
+				// Si el doctor ya está conectado a SignalR, enviar offer ahora que el peer existe
+				if (role === "doctor" && signalRRef.current?.isConnected && signalRRef.current?.isJoined) {
+					offerSentRef.current = false;
+					const offer = await peer.createOffer();
+					await peer.setLocalDescription(offer);
+					if (peer.localDescription && signalRRef.current) {
+						await signalRRef.current.sendOffer(sessionId, peer.localDescription);
+						offerSentRef.current = true;
+					}
+				}
+			} catch (err) {
+				if (!isCancelled) {
+					console.error("[useWebRTC] setupPeer failed:", err);
+					setConnectionState("failed");
+				}
 			}
 		};
 
@@ -113,12 +171,13 @@ export function useWebRTC(
 			setRemoteStream(null);
 		};
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [iceServers, role, sessionId]);
+	}, [sessionId, iceServers, role]);
 
 	useEffect(() => {
-		if (!signalR) return undefined;
+		const sr = signalRRef.current;
+		if (!sr) return undefined;
 
-		signalR.onOffer(async ({ sdp }) => {
+		sr.onOffer(async ({ sdp }) => {
 			const peer = peerRef.current;
 			if (!peer) {
 				pendingOfferRef.current = sdp;
@@ -129,8 +188,8 @@ export function useWebRTC(
 			await peer.setRemoteDescription(new RTCSessionDescription(sdp));
 			const answer = await peer.createAnswer();
 			await peer.setLocalDescription(answer);
-			if (peer.localDescription) {
-				await signalR.sendAnswer(sessionId, peer.localDescription);
+			if (peer.localDescription && signalRRef.current) {
+				await signalRRef.current.sendAnswer(sessionId, peer.localDescription);
 			}
 
 			const pendingCandidates = pendingCandidatesRef.current;
@@ -142,10 +201,11 @@ export function useWebRTC(
 			);
 		});
 
-		signalR.onAnswer(async ({ sdp }) => {
+		sr.onAnswer(async ({ sdp }) => {
 			const peer = peerRef.current;
 			if (!peer || role !== "doctor") return;
 			await peer.setRemoteDescription(new RTCSessionDescription(sdp));
+			answerReceivedRef.current = true;
 
 			const pendingCandidates = pendingCandidatesRef.current;
 			pendingCandidatesRef.current = [];
@@ -156,7 +216,7 @@ export function useWebRTC(
 			);
 		});
 
-		signalR.onIceCandidate(async ({ candidate }) => {
+		sr.onIceCandidate(async ({ candidate }) => {
 			const peer = peerRef.current;
 			if (!peer) {
 				pendingCandidatesRef.current.push(candidate);
@@ -172,43 +232,59 @@ export function useWebRTC(
 		});
 
 		return () => {
-			signalR.onOffer(null);
-			signalR.onAnswer(null);
-			signalR.onIceCandidate(null);
+			sr.onOffer(null);
+			sr.onAnswer(null);
+			sr.onIceCandidate(null);
 		};
-	}, [role, sessionId, signalR]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [role, sessionId]);
 
-	const offerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const offerSchedulerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const scheduleOffer = useCallback((immediate = false) => {
+		// Cancela cualquier oferta pendiente
+		if (offerSchedulerRef.current) {
+			clearTimeout(offerSchedulerRef.current);
+			offerSchedulerRef.current = null;
+		}
+
+		const delay = immediate ? 0 : 2000;
+
+		offerSchedulerRef.current = setTimeout(async () => {
+			offerSchedulerRef.current = null;
+			await sendOffer(immediate);
+		}, delay);
+		}, []);
+	
+	useEffect(() => {
+		const sr = signalRRef.current;
+		if (!sr || role !== "doctor") return undefined;
+
+		sr.onJoinedRoom(() => {
+			offerSentRef.current = false;
+			scheduleOffer(true);
+		});
+
+		return () => {
+			sr.onJoinedRoom(null);
+		};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [role, scheduleOffer]);
 
 	useEffect(() => {
 		if (role !== "doctor") return;
 		if (!signalR?.isConnected || !signalR?.isJoined) return;
 		if (offerSentRef.current) return;
 
-		// Espera 2s para dar tiempo al paciente de unirse
-		// Si ya recibió un answer, offerSentRef evita reenvío
-		offerTimeoutRef.current = setTimeout(async () => {
-			const peer = peerRef.current;
-			if (!peer || offerSentRef.current || !signalR) return;
-
-			try {
-				const offer = await peer.createOffer();
-				await peer.setLocalDescription(offer);
-				if (peer.localDescription) {
-					await signalR.sendOffer(sessionId, peer.localDescription);
-					offerSentRef.current = true;
-				}
-			} catch {
-				// El paciente aún no está
-			}
-		}, 20000);
+		scheduleOffer(false); // 2s de delay
 
 		return () => {
-			if (offerTimeoutRef.current) {
-				clearTimeout(offerTimeoutRef.current);
+			if (offerSchedulerRef.current) {
+				clearTimeout(offerSchedulerRef.current);
+				offerSchedulerRef.current = null;
 			}
 		};
-	}, [role, sessionId, signalR?.isConnected, signalR?.isJoined]);
+	}, [role, sessionId, signalR?.isConnected, signalR?.isJoined, scheduleOffer]);
 
 	const closeConnection = () => {
 		const peer = peerRef.current;
@@ -224,25 +300,16 @@ export function useWebRTC(
 	};
 
 	const retryOffer = async () => {
-		const peer = peerRef.current;
-		if (!peer || !signalR || role !== "doctor") return;
-
-		offerSentRef.current = false; // permite reenviar
-		try {
-			const offer = await peer.createOffer();
-			await peer.setLocalDescription(offer);
-			if (peer.localDescription) {
-				await signalR.sendOffer(sessionId, peer.localDescription);
-				offerSentRef.current = true;
-			}
-		} catch {
-		}
+		if (!signalR?.isConnected) return;
+		offerSentRef.current = false;
+		await sendOffer(true);
 	};
 
 	return {
 		localStream,
 		remoteStream,
 		connectionState,
+		mediaError,
 		closeConnection,
 		retryOffer
 	};

@@ -223,7 +223,6 @@ export default function VideoCall() {
 
 		setIsStartingSession(true);
 
-
 		try {
 			try {
 				await doctorService.postStartVideoSession(session.sessionId);

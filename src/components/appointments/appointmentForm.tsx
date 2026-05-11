@@ -544,7 +544,7 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   </div>
                 </FormControl>
-                <FormDescription>Máximo 1 año en el futuro</FormDescription>
+                <FormDescription>Elija un horario entre 7:00 AM y 7:00 PM</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -58,6 +58,7 @@ import { useVideoSession } from "@/hooks/useVideoSession";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { VideoSessionStatus } from "@/constants/videoSessionStatus";
 import { useAuthStore } from "@/store/auth.store";
+import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
@@ -224,10 +225,12 @@ const ChatPanel = ({
 export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   const { toast } = useToast();
   const { user } = useAuthStore();
+  const router = useRouter();
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const messageIdsRef = useRef(new Set<string>());
   const remotePresenceRef = useRef(false);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -240,7 +243,7 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
     useIceCredentials(sessionId);
   const signalR = useSignalR(sessionId);
   const { chatHistory, chatError, endSession } = useVideoSession(sessionId);
-  const { localStream, remoteStream, connectionState, closeConnection, retryOffer } =
+  const { localStream, remoteStream, connectionState, mediaError, closeConnection, retryOffer } =
     useWebRTC(sessionId, iceServers, role, signalR);
 
   const localInitials = useMemo(() => {
@@ -319,6 +322,31 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
     },
     [remoteParticipant.name, user?.sub]
   );
+  const setLocalVideoElement = useCallback(
+    (node: HTMLVideoElement | null) => {
+      localVideoRef.current = node;
+      if (node && localStream) {
+        node.srcObject = localStream;
+      }
+    },
+    [localStream]
+  );
+
+  const setRemoteVideoElement = useCallback(
+    (node: HTMLVideoElement | null) => {
+      remoteVideoRef.current = node;
+      if (node && remoteStream) {
+        node.srcObject = remoteStream;
+      }
+    },
+    [remoteStream]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!localVideoRef.current) return;
@@ -401,6 +429,15 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   }, [iceError, toast]);
 
   useEffect(() => {
+    if (mediaError) {
+      toast({
+        title: "Cámara no disponible",
+        description: mediaError,
+      });
+    }
+  }, [mediaError, toast]);
+
+  useEffect(() => {
     if (remotePresenceRef.current === remoteConnected) return;
     remotePresenceRef.current = remoteConnected;
 
@@ -414,18 +451,19 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
     });
   }, [remoteConnected, toast]);
 
-  const handleReconnect = async () => {
-      const refreshed = await refresh();
-      if (!refreshed) return;
-      if (role === "doctor") {
-          await retryOffer(); // reenvía el offer al paciente
-      }
+const handleReconnect = () => {
+  // Cancela cualquier intento pendiente antes de agendar uno nuevo
+  if (reconnectTimeoutRef.current) {
+    clearTimeout(reconnectTimeoutRef.current);
+  }
 
-      toast({
-          title: "Reconectando",
-          description: "Actualizamos las credenciales para la sesion.",
-      });
-  };
+  reconnectTimeoutRef.current = setTimeout(async () => {
+    reconnectTimeoutRef.current = null;
+    const refreshed = await refresh();
+    if (!refreshed) return;
+    if (role === "doctor") await retryOffer();
+  }, 500); // 500ms de debounce
+};
 
   const handleEndSession = async () => {
     try {
@@ -437,6 +475,7 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
         title: "Sesion finalizada",
         description: "La llamada se cerro correctamente.",
       });
+      router.push("/dashboard");
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo finalizar.";
       toast({
@@ -497,7 +536,7 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
       <div className="flex-1 px-4 pb-4">
         <div className="relative h-full min-h-[360px] overflow-hidden rounded-lg border bg-slate-950 text-white">
           <video
-            ref={remoteVideoRef}
+            ref={setRemoteVideoElement}
             className={cn(
               "h-full w-full object-cover",
               remoteConnected && isRemoteVideoOn ? "opacity-100" : "opacity-0"
@@ -576,7 +615,7 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
           <div className="absolute bottom-4 right-4 w-40 sm:w-48 md:w-56">
             <div className="relative aspect-video overflow-hidden rounded-lg border border-white/10 bg-slate-900">
               <video
-                ref={localVideoRef}
+                ref={setLocalVideoElement}
                 className={cn(
                   "h-full w-full object-cover",
                   isCameraOn ? "opacity-100" : "opacity-0"

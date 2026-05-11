@@ -15,7 +15,11 @@ export default function VideoSessionPage({ params }: VideoSessionPageProps) {
 
   if (!_hasHydrated || !user) return null;
 
-  const role = user.role === UserRole.PATIENT ? "patient" : "doctor";
+  const normalizedRole = user.role?.toLowerCase?.() ?? "";
+  const role =
+    user.role === UserRole.PATIENT || normalizedRole === "patient"
+      ? "patient"
+      : "doctor";
 
   return <VideoCallRoom sessionId={params.sessionId} role={role} />;
 }
