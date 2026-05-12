@@ -86,6 +86,12 @@ export const doctorService = {
         const response = await apiClient.post(`/video-sessions/${sessionId}/refresh-token`);
         return response.data;
     },
+    getVideoSessionsDetails: async (filters: {
+        includeEnded?: boolean;
+    }): Promise<VideoSession[]> => {
+        const response = await apiClient.get<VideoSession[]>(`/video-sessions/mine`, { params: filters });
+        return response.data;
+    },
     getChatHistory: async (sessionId: string): Promise<VideoChatMessage[]> => {
         const response = await apiClient.get<VideoChatMessage[]>(`/video-sessions/${sessionId}/chat-history`);
         return response.data;

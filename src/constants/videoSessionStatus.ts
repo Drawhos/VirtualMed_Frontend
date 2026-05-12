@@ -4,4 +4,5 @@ export enum VideoSessionStatus {
   RECONNECTING = "Reconnecting",
   ENDED = "Ended",
   ERROR = "Error",
+  CREATED = "Created",
 }

@@ -77,7 +77,14 @@ interface ChatMessage {
   timestamp: string;
   sentAt: number;
   isLocal: boolean;
+  status?: "sending" | "sent" | "failed";
 }
+
+type PendingMessage = {
+  content: string;
+  sentAt: number;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+};
 
 type RealtimeMessagePayload = {
   id: string;
@@ -94,6 +101,7 @@ const SESSION_STATUS_LABELS: Record<VideoSessionStatus, string> = {
   [VideoSessionStatus.RECONNECTING]: "Reconectando",
   [VideoSessionStatus.ENDED]: "Finalizada",
   [VideoSessionStatus.ERROR]: "Error",
+  [VideoSessionStatus.CREATED]: "Creada",
 };
 
 const SESSION_STATUS_VARIANTS: Record<VideoSessionStatus, BadgeVariant> = {
@@ -102,6 +110,7 @@ const SESSION_STATUS_VARIANTS: Record<VideoSessionStatus, BadgeVariant> = {
   [VideoSessionStatus.RECONNECTING]: "default",
   [VideoSessionStatus.ENDED]: "outline",
   [VideoSessionStatus.ERROR]: "destructive",
+  [VideoSessionStatus.CREATED]: "outline",
 };
 
 const CHAT_STATUS_LABELS: Record<ChatStatus, string> = {
@@ -117,6 +126,8 @@ const CHAT_STATUS_VARIANTS: Record<ChatStatus, BadgeVariant> = {
   reconnecting: "default",
   disconnected: "destructive",
 };
+
+const PENDING_MESSAGE_TIMEOUT_MS = 12000;
 
 const formatTime = (value: Date) =>
   new Intl.DateTimeFormat("es-CO", {
@@ -139,6 +150,7 @@ interface ChatPanelProps {
   onSendMessage: (event: FormEvent<HTMLFormElement>) => void;
   chatStatus: ChatStatus;
   isChatDisabled: boolean;
+  isSending: boolean;
 }
 
 const ChatPanel = ({
@@ -148,6 +160,7 @@ const ChatPanel = ({
   onSendMessage,
   chatStatus,
   isChatDisabled,
+  isSending,
 }: ChatPanelProps) => {
   const statusLabel = CHAT_STATUS_LABELS[chatStatus];
   const statusVariant = CHAT_STATUS_VARIANTS[chatStatus];
@@ -192,7 +205,13 @@ const ChatPanel = ({
                   )}
                 >
                   <span className="font-medium">{message.author}</span>
-                  <span>{message.timestamp}</span>
+                  <span>
+                    {message.status === "sending"
+                      ? "Enviando..."
+                      : message.status === "failed"
+                        ? "Error al enviar"
+                        : message.timestamp}
+                  </span>
                 </div>
                 <p className="leading-relaxed">{message.content}</p>
               </div>
@@ -214,8 +233,11 @@ const ChatPanel = ({
           }
           disabled={isChatDisabled}
         />
-        <Button type="submit" disabled={isChatDisabled || !messageDraft.trim()}>
-          Enviar
+        <Button
+          type="submit"
+          disabled={isChatDisabled || isSending || !messageDraft.trim()}
+        >
+          {isSending ? "Enviando..." : "Enviar"}
         </Button>
       </form>
     </div>
@@ -229,8 +251,11 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const messageIdsRef = useRef(new Set<string>());
+  const pendingMessagesRef = useRef(new Map<string, PendingMessage>());
   const remotePresenceRef = useRef(false);
+  const participantLeftRef = useRef(false);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendLockRef = useRef(false);
 
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
@@ -238,14 +263,17 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
-
+  const [isSending, setIsSending] = useState(false);
+  const [callEndedInfo, setCallEndedInfo] = useState<{ endReason?: string } | null>(null);
+  const [peerResetKey, setPeerResetKey] = useState(0);
+  
   const { iceServers, isLoading: isIceLoading, error: iceError, refresh } =
-    useIceCredentials(sessionId);
+  useIceCredentials(sessionId);
   const signalR = useSignalR(sessionId);
   const { chatHistory, chatError, endSession } = useVideoSession(sessionId);
-  const { localStream, remoteStream, connectionState, mediaError, closeConnection, retryOffer } =
-    useWebRTC(sessionId, iceServers, role, signalR);
-
+  const { localStream, remoteStream, connectionState, mediaError, closeConnection } =
+  useWebRTC(sessionId, iceServers, role, signalR, peerResetKey);
+  
   const localInitials = useMemo(() => {
     const initials = user?.fullName
       ?.split(" ")
@@ -253,30 +281,32 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
       .join("")
       .toUpperCase()
       .slice(0, 2);
-    return initials || "TU";
-  }, [user?.fullName]);
-
-  const remoteParticipant = useMemo(
-    () =>
-      role === "doctor"
-        ? { name: "Paciente invitado", initials: "PI" }
-        : { name: "Doctor invitado", initials: "DI" },
-    [role]
-  );
-
-  const sessionStatus = useMemo<VideoSessionStatus>(() => {
-    if (hasEnded) return VideoSessionStatus.ENDED;
-    if (iceError) return VideoSessionStatus.ERROR;
-    if (connectionState === "failed") return VideoSessionStatus.ERROR;
-    if (signalR.status === "reconnecting") return VideoSessionStatus.RECONNECTING;
-    if (connectionState === "connected") return VideoSessionStatus.ACTIVE;
+      return initials || "TU";
+    }, [user?.fullName]);
+    
+    const remoteParticipant = useMemo(
+      () =>
+        role === "doctor"
+      ? { name: "Paciente invitado", initials: "PI" }
+      : { name: "Doctor invitado", initials: "DI" },
+      [role]
+    );
+    
+    const sessionStatus = useMemo<VideoSessionStatus>(() => {
+      if (hasEnded) return VideoSessionStatus.ENDED;
+      if (iceError) return VideoSessionStatus.ERROR;
+      if (connectionState === "failed") return VideoSessionStatus.ERROR;
+      if (signalR.status === "reconnecting") return VideoSessionStatus.RECONNECTING;
+      if (connectionState === "connected") return VideoSessionStatus.ACTIVE;
     if (connectionState === "disconnected") return VideoSessionStatus.RECONNECTING;
     return VideoSessionStatus.WAITING;
   }, [connectionState, hasEnded, iceError, signalR.status]);
-
-  const isRemoteVideoOn =
-    remoteStream?.getVideoTracks().some((track) => track.enabled) ?? false;
+  
   const remoteConnected = Boolean(remoteStream);
+  const isRemoteVideoOn =
+  remoteStream
+    ?.getVideoTracks()
+    .some((t) => t.enabled && t.readyState !== "ended") ?? false;
   const isChatDisabled =
     sessionStatus === VideoSessionStatus.ERROR ||
     sessionStatus === VideoSessionStatus.ENDED;
@@ -289,12 +319,100 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
     sessionStatus === VideoSessionStatus.WAITING ||
     sessionStatus === VideoSessionStatus.RECONNECTING;
   const chatStatus = signalR.status as ChatStatus;
+  const showCallEndedNotice = role === "patient" && Boolean(callEndedInfo);
+  const mediaControlsDisabledReason = useMemo(() => {
+    if (sessionStatus === VideoSessionStatus.ERROR) {
+      return "Controles deshabilitados por error de red.";
+    }
+    if (sessionStatus === VideoSessionStatus.ENDED) {
+      return "Controles deshabilitados porque la sesion finalizo.";
+    }
+    if (!localStream) {
+      return mediaError
+        ? `Controles deshabilitados: ${mediaError}`
+        : "Controles deshabilitados: no hay acceso a camara o microfono.";
+    }
+    return "";
+  }, [localStream, mediaError, sessionStatus]);
+
+  const removeMessageById = useCallback((id: string) => {
+    messageIdsRef.current.delete(id);
+    const pendingEntry = pendingMessagesRef.current.get(id);
+    if (pendingEntry?.timeoutId) {
+      clearTimeout(pendingEntry.timeoutId);
+    }
+    pendingMessagesRef.current.delete(id);
+    setMessages((previous) => previous.filter((message) => message.id !== id));
+  }, []);
+
+  const appendPendingMessage = useCallback((content: string) => {
+    const sentAt = Date.now();
+    const id = `local-${sentAt}`;
+    const pendingMessage: ChatMessage = {
+      id,
+      author: "Tu",
+      content,
+      timestamp: formatTime(new Date(sentAt)),
+      sentAt,
+      isLocal: true,
+      status: "sending",
+    };
+
+    messageIdsRef.current.add(id);
+    const timeoutId = setTimeout(() => {
+      const pendingEntry = pendingMessagesRef.current.get(id);
+      if (!pendingEntry) return;
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === id && message.status === "sending"
+            ? { ...message, status: "failed" }
+            : message
+        )
+      );
+    }, PENDING_MESSAGE_TIMEOUT_MS);
+    pendingMessagesRef.current.set(id, { content, sentAt, timeoutId });
+    setMessages((previous) =>
+      [...previous, pendingMessage].sort((left, right) => left.sentAt - right.sentAt)
+    );
+
+    return pendingMessage;
+  }, []);
 
   const appendMessage = useCallback((message: ChatMessage) => {
     if (messageIdsRef.current.has(message.id)) return;
+
+    if (message.isLocal) {
+      const pendingEntries = Array.from(pendingMessagesRef.current.entries());
+      const matched = pendingEntries.find(([, pending]) => {
+        const withinWindow = Math.abs(pending.sentAt - message.sentAt) <= 15000;
+        return pending.content === message.content && withinWindow;
+      });
+
+      if (matched) {
+        const [pendingId] = matched;
+        const pendingEntry = pendingMessagesRef.current.get(pendingId);
+        if (pendingEntry?.timeoutId) {
+          clearTimeout(pendingEntry.timeoutId);
+        }
+        pendingMessagesRef.current.delete(pendingId);
+        messageIdsRef.current.delete(pendingId);
+        setMessages((previous) => {
+          const next = previous.filter((entry) => entry.id !== pendingId);
+          const resolvedStatus: ChatMessage["status"] = "sent";
+          return [...next, { ...message, status: resolvedStatus }].sort(
+            (left, right) => left.sentAt - right.sentAt
+          );
+        });
+        return;
+      }
+    }
+
     messageIdsRef.current.add(message.id);
+    const resolvedStatus: ChatMessage["status"] = message.status ?? "sent";
     setMessages((previous) =>
-      [...previous, message].sort((left, right) => left.sentAt - right.sentAt)
+      [...previous, { ...message, status: resolvedStatus }].sort(
+        (left, right) => left.sentAt - right.sentAt
+      )
     );
   }, []);
 
@@ -308,8 +426,8 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
       const author = isSystem
         ? "Sistema"
         : isLocal
-        ? "Tu"
-        : remoteParticipant.name;
+          ? "Tu"
+          : remoteParticipant.name;
 
       return {
         id: payload.id,
@@ -343,8 +461,12 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   );
 
   useEffect(() => {
+    const pendingMessages = pendingMessagesRef.current;
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      pendingMessages.forEach((pending) => {
+        if (pending.timeoutId) clearTimeout(pending.timeoutId);
+      });
     };
   }, []);
 
@@ -399,6 +521,51 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   }, [appendMessage, buildChatMessage, signalR]);
 
   useEffect(() => {
+    signalR.onParticipantLeft((payload) => {
+      if (payload.sessionId !== sessionId) return;
+      if (payload.userId && payload.userId === user?.sub) return;
+      participantLeftRef.current = true;
+      remotePresenceRef.current = false;
+      toast({
+        title: "Participante desconectado",
+        description: "El participante abandono la reunion.",
+      });
+    });
+
+    return () => {
+      signalR.onParticipantLeft(null);
+    };
+  }, [sessionId, signalR, toast, user?.sub]);
+
+  useEffect(() => {
+    if (role !== "doctor") return;
+
+    signalR.onParticipantJoined((payload) => {
+      if (payload.sessionId !== sessionId) return;
+      // El paciente tiene un peer nuevo — el doctor también debe recrear el suyo
+      setPeerResetKey((k) => k + 1);
+    });
+
+    return () => {
+      signalR.onParticipantJoined(null);
+    };
+  }, [role, sessionId, signalR]);
+
+  useEffect(() => {
+    signalR.onCallEnded((payload) => {
+      if (payload.sessionId !== sessionId) return;
+      if (role !== "patient") return;
+      setHasEnded(true);
+      closeConnection();
+      setCallEndedInfo({ endReason: payload.endReason });
+    });
+
+    return () => {
+      signalR.onCallEnded(null);
+    };
+  }, [closeConnection, role, sessionId, signalR]);
+
+  useEffect(() => {
     if (signalR.error) {
       toast({
         title: "SignalR",
@@ -438,6 +605,14 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   }, [mediaError, toast]);
 
   useEffect(() => {
+    if (remoteConnected) {
+      participantLeftRef.current = false;
+    }
+    if (!remoteConnected && participantLeftRef.current) {
+      participantLeftRef.current = false;
+      remotePresenceRef.current = remoteConnected;
+      return;
+    }
     if (remotePresenceRef.current === remoteConnected) return;
     remotePresenceRef.current = remoteConnected;
 
@@ -451,19 +626,33 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
     });
   }, [remoteConnected, toast]);
 
-const handleReconnect = () => {
-  // Cancela cualquier intento pendiente antes de agendar uno nuevo
-  if (reconnectTimeoutRef.current) {
-    clearTimeout(reconnectTimeoutRef.current);
-  }
+  const handleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
 
-  reconnectTimeoutRef.current = setTimeout(async () => {
-    reconnectTimeoutRef.current = null;
-    const refreshed = await refresh();
-    if (!refreshed) return;
-    if (role === "doctor") await retryOffer();
-  }, 500); // 500ms de debounce
-};
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      reconnectTimeoutRef.current = null;
+
+      // 1. Refrescar ICE 
+      await refresh();
+
+      // 2. Forzar recreación del peer (incrementar key)
+      //    El efecto en useWebRTC se vuelve a ejecutar y,
+      //    al final de setupPeer, el doctor auto-envía offer.
+      setPeerResetKey((k) => k + 1);
+
+      // 3. Para el paciente: re-unirse a la sala dispara
+      //    `participantJoined` en el doctor, quien manda nuevo offer.
+      if (role === "patient" && signalR.isConnected) {
+        try {
+          await signalR.rejoinRoom();
+        } catch {
+          // noop
+        }
+      }
+    }, 500);
+  }, [refresh, role, signalR]);
 
   const handleEndSession = async () => {
     try {
@@ -488,11 +677,43 @@ const handleReconnect = () => {
     }
   };
 
+  const handleLeaveSession = async () => {
+    try {
+      await signalR.leaveRoom();
+      closeConnection();
+      router.push(`/dashboard/video-session/${sessionId}/out`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo salir.";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsEndDialogOpen(false);
+    }
+  };
+
+  const handleGoHome = useCallback(() => {
+    const finalize = async () => {
+      try {
+        await signalR.leaveRoom();
+      } catch {
+        // noop
+      }
+      closeConnection();
+      router.push("/dashboard");
+    };
+
+    void finalize();
+  }, [closeConnection, router, signalR]);
+
   const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmed = messageDraft.trim();
     if (!trimmed || isChatDisabled) return;
+    if (sendLockRef.current) return;
 
     if (!signalR.isConnected) {
       toast({
@@ -503,15 +724,24 @@ const handleReconnect = () => {
       return;
     }
 
+    sendLockRef.current = true;
+    setIsSending(true);
+    const pendingMessage = appendPendingMessage(trimmed);
+    setMessageDraft("");
+
     try {
       await signalR.sendMessage(sessionId, trimmed, 0);
-      setMessageDraft("");
     } catch {
+      removeMessageById(pendingMessage.id);
+      setMessageDraft(trimmed);
       toast({
         title: "Error",
         description: "No se pudo enviar el mensaje.",
         variant: "destructive",
       });
+    } finally {
+      sendLockRef.current = false;
+      setIsSending(false);
     }
   };
 
@@ -527,7 +757,7 @@ const handleReconnect = () => {
         <span>
           Calidad de red:{" "}
           {sessionStatus === VideoSessionStatus.RECONNECTING ||
-          sessionStatus === VideoSessionStatus.ERROR
+            sessionStatus === VideoSessionStatus.ERROR
             ? "Inestable"
             : "Estable"}
         </span>
@@ -572,16 +802,15 @@ const handleReconnect = () => {
             </div>
           )}
 
-          {sessionStatus === VideoSessionStatus.WAITING && (
+          {sessionStatus === VideoSessionStatus.WAITING && !remoteConnected && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60">
               <div className="space-y-3 text-center">
                 <p className="text-lg font-semibold">Esperando al participante</p>
                 <p className="text-sm text-white/70">
-                  Puedes preparar tu audio y camara mientras tanto.
+                  {localStream
+                    ? "Tu camara y microfono estan listos."
+                    : "Preparando camara y microfono..."}
                 </p>
-                <Button onClick={handleReconnect} disabled={isIceLoading}>
-                  Iniciar sesion
-                </Button>
               </div>
             </div>
           )}
@@ -664,7 +893,11 @@ const handleReconnect = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {isMuted ? "Activar microfono" : "Silenciar microfono"}
+              {areMediaControlsDisabled && mediaControlsDisabledReason
+                ? mediaControlsDisabledReason
+                : isMuted
+                  ? "Activar microfono"
+                  : "Silenciar microfono"}
             </TooltipContent>
           </Tooltip>
 
@@ -680,22 +913,17 @@ const handleReconnect = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {isCameraOn ? "Apagar camara" : "Encender camara"}
+              {areMediaControlsDisabled && mediaControlsDisabledReason
+                ? mediaControlsDisabledReason
+                : isCameraOn
+                  ? "Apagar camara"
+                  : "Encender camara"}
             </TooltipContent>
           </Tooltip>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {chatTrigger}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleReconnect}
-            disabled={sessionStatus === VideoSessionStatus.ENDED}
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">Reconectar</span>
-          </Button>
 
           <Dialog open={isEndDialogOpen} onOpenChange={setIsEndDialogOpen}>
             <DialogTrigger asChild>
@@ -705,14 +933,22 @@ const handleReconnect = () => {
                 disabled={sessionStatus === VideoSessionStatus.ENDED}
               >
                 <PhoneOff className="h-4 w-4" />
-                <span className="hidden sm:inline">Finalizar</span>
+                <span className="hidden sm:inline">
+                  {role === "doctor" ? "Finalizar" : "Salir"}
+                </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Finalizar sesion?</DialogTitle>
+                <DialogTitle>
+                  {role === "doctor"
+                    ? "Finalizar sesion?"
+                    : "Salir de la videollamada?"}
+                </DialogTitle>
                 <DialogDescription>
-                  La llamada terminara para todos los participantes.
+                  {role === "doctor"
+                    ? "La llamada terminara para todos los participantes."
+                    : "Tu conexión se cerrará, pero la sesión seguirá activa para el doctor."}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -722,8 +958,11 @@ const handleReconnect = () => {
                 >
                   Cancelar
                 </Button>
-                <Button variant="destructive" onClick={handleEndSession}>
-                  Finalizar sesion
+                <Button
+                  variant="destructive"
+                  onClick={role === "doctor" ? handleEndSession : handleLeaveSession}
+                >
+                  {role === "doctor" ? "Finalizar sesion" : "Salir de la llamada"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -784,6 +1023,25 @@ const handleReconnect = () => {
           </Alert>
         )}
 
+        {showCallEndedNotice && (
+          <Alert className="border-slate-200 bg-slate-50 text-slate-900">
+            <PhoneOff className="h-4 w-4" />
+            <div>
+              <AlertTitle>El doctor finalizo la llamada</AlertTitle>
+              <AlertDescription>
+                {callEndedInfo?.endReason
+                  ? `Motivo: ${callEndedInfo.endReason}`
+                  : "La sesion termino. Puedes volver al inicio."}
+                <div className="mt-3">
+                  <Button size="sm" onClick={handleGoHome}>
+                    Ir al inicio
+                  </Button>
+                </div>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+
         <div className="hidden lg:block">
           <div className="rounded-xl border bg-white shadow-sm">
             <ResizablePanelGroup orientation="horizontal" className="min-h-[620px]">
@@ -799,6 +1057,7 @@ const handleReconnect = () => {
                   onSendMessage={handleSendMessage}
                   chatStatus={chatStatus}
                   isChatDisabled={isChatDisabled}
+                  isSending={isSending}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -823,6 +1082,7 @@ const handleReconnect = () => {
                 onSendMessage={handleSendMessage}
                 chatStatus={chatStatus}
                 isChatDisabled={isChatDisabled}
+                isSending={isSending}
               />
             </SheetContent>
           </Sheet>

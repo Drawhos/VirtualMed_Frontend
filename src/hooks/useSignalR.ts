@@ -45,6 +45,23 @@ type JoinedRoomPayload = {
 	sessionId: string;
 };
 
+type ParticipantJoinedPayload = {
+  sessionId: string;
+  userId: string;
+  connectionId: string;
+};
+
+type ParticipantLeftPayload = {
+	sessionId: string;
+	userId: string;
+	connectionId: string;
+};
+
+type CallEndedPayload = {
+	sessionId: string;
+	endReason?: string;
+};
+
 type Callback<T> = ((payload: T) => void) | null;
 
 const mapStatus = (state: HubConnectionState): ConnectionStatus => {
@@ -71,6 +88,9 @@ export function useSignalR(sessionId: string) {
 	const iceHandlerRef = useRef<Callback<IceCandidatePayload>>(null);
 	const messageHandlerRef = useRef<Callback<MessagePayload>>(null);
 	const joinedHandlerRef = useRef<Callback<JoinedRoomPayload>>(null);
+	const participantJoinedHandlerRef = useRef<Callback<ParticipantJoinedPayload>>(null);
+	const participantLeftHandlerRef = useRef<Callback<ParticipantLeftPayload>>(null);
+	const callEndedHandlerRef = useRef<Callback<CallEndedPayload>>(null);
 
 	const onOffer = useCallback((handler: Callback<OfferPayload>) => {
 		offerHandlerRef.current = handler;
@@ -90,6 +110,18 @@ export function useSignalR(sessionId: string) {
 
 	const onJoinedRoom = useCallback((handler: Callback<JoinedRoomPayload>) => {
 		joinedHandlerRef.current = handler;
+	}, []);
+
+	const onParticipantJoined = useCallback((handler: Callback<ParticipantJoinedPayload>) => {
+		participantJoinedHandlerRef.current = handler;
+	}, []);
+
+	const onParticipantLeft = useCallback((handler: Callback<ParticipantLeftPayload>) => {
+		participantLeftHandlerRef.current = handler;
+	}, []);
+
+	const onCallEnded = useCallback((handler: Callback<CallEndedPayload>) => {
+		callEndedHandlerRef.current = handler;
 	}, []);
 
 	const sendOffer = useCallback(async (targetSessionId: string, sdp: RTCSessionDescriptionInit) => {
@@ -134,6 +166,19 @@ export function useSignalR(sessionId: string) {
 		setIsJoined(false);
 	}, [sessionId]);
 
+	const rejoinRoom = useCallback(async () => {
+		const connection = connectionRef.current;
+		if (!connection || connection.state !== HubConnectionState.Connected) return;
+		try {
+			await connection.invoke("LeaveRoom", sessionId);
+		} catch {
+			// noop — podría no estar en la sala
+		}
+		await connection.invoke("JoinRoom", sessionId);
+		setIsJoined(true);
+		setError(null);
+		}, [sessionId]);
+
 	useEffect(() => {
 		if (!sessionId) return undefined;
 
@@ -172,6 +217,15 @@ export function useSignalR(sessionId: string) {
 			setError(null);
 			joinedHandlerRef.current?.(payload);
 		});
+		connection.on("participantJoined", (payload: ParticipantJoinedPayload) => {
+			participantJoinedHandlerRef.current?.(payload);
+		});
+		connection.on("participantLeft", (payload: ParticipantLeftPayload) => {
+			participantLeftHandlerRef.current?.(payload);
+		});
+		connection.on("callEnded", (payload: CallEndedPayload) => {
+			callEndedHandlerRef.current?.(payload);
+		});
 
 		connection.onreconnecting(() => {
 			setStatus(mapStatus(connection.state));
@@ -199,7 +253,10 @@ export function useSignalR(sessionId: string) {
 				setStatus("connecting");
 				await connection.start();
 
-				if (cancelled) return;
+				if (cancelled) {
+					await connection.stop();
+					return;
+				}
 
 				setStatus(mapStatus(connection.state));
 				try {
@@ -256,7 +313,11 @@ export function useSignalR(sessionId: string) {
 			onIceCandidate,
 			onMessageReceived,
 			onJoinedRoom,
+			onParticipantJoined,
+			onParticipantLeft,
+			onCallEnded,
 			leaveRoom,
+			rejoinRoom
 		}),
 		[
 			status,
@@ -271,7 +332,11 @@ export function useSignalR(sessionId: string) {
 			onIceCandidate,
 			onMessageReceived,
 			onJoinedRoom,
+			onParticipantJoined,
+			onParticipantLeft,
+			onCallEnded,
 			leaveRoom,
+			rejoinRoom
 		]
 	);
 }

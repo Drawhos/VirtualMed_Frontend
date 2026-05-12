@@ -113,6 +113,8 @@ export const getSessionStatusLabel = (status?: string) => {
   if (!status) return "Sin estado";
 
   switch (status) {
+    case VideoSessionStatus.CREATED:
+      return "Creada";
     case VideoSessionStatus.WAITING:
       return "Esperando";
     case VideoSessionStatus.ACTIVE:

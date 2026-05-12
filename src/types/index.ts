@@ -192,6 +192,7 @@ export interface AppointmentGetResponse {
   hasClinicalEncounter: boolean;
   createdAt: string;
   updatedAt: string;
+  videoSessionId?: string | null;
 }
 
 export interface AppointmentResponse {

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Card,
 	CardContent,
@@ -56,9 +57,13 @@ export default function VideoCall() {
 	);
 	const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
 	const [selectedAppointmentId, setSelectedAppointmentId] = useState("");
+	const [sessions, setSessions] = useState<VideoSession[]>([]);
+	const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+	const [selectedSessionId, setSelectedSessionId] = useState("");
+	const [includeEndedSessions, setIncludeEndedSessions] = useState(false);
+	const [patientNames, setPatientNames] = useState<Record<string, string>>({});
 
 	const [session, setSession] = useState<VideoSession | null>(null);
-	const [sessionId, setSessionId] = useState("");
 	const [isCreatingSession, setIsCreatingSession] = useState(false);
 	const [isFetchingSession, setIsFetchingSession] = useState(false);
 	const [isStartingSession, setIsStartingSession] = useState(false);
@@ -88,6 +93,92 @@ export default function VideoCall() {
 		loadAppointments();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const loadSessions = async (options?: {
+		includeEnded?: boolean;
+		preferredSessionId?: string;
+	}) => {
+		setIsLoadingSessions(true);
+		try {
+			const response = await doctorService.getVideoSessionsDetails({
+				includeEnded: options?.includeEnded ?? includeEndedSessions,
+			});
+			setSessions(response);
+
+			const nextSessionId =
+				options?.preferredSessionId ??
+				(response.some((item) => item.sessionId === selectedSessionId)
+					? selectedSessionId
+					: response[0]?.sessionId ?? "");
+
+			if (!nextSessionId) {
+				setSelectedSessionId("");
+				setSession(null);
+				return;
+			}
+
+			setSelectedSessionId(nextSessionId);
+			setHasRefreshedIce(false);
+			await loadSession(nextSessionId);
+		} catch (error) {
+			const description = isAxiosError(error)
+				? error.response?.data?.message || "Error al cargar las sesiones."
+				: "Error al cargar las sesiones.";
+
+			toast({
+				title: "Error",
+				description,
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoadingSessions(false);
+		}
+	};
+
+	useEffect(() => {
+		loadSessions({ includeEnded: includeEndedSessions });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [includeEndedSessions]);
+
+	useEffect(() => {
+		if (!sessions.length) return;
+		let isCancelled = false;
+
+		const loadPatientNames = async () => {
+			const uniquePatientIds = Array.from(
+				new Set(sessions.map((item) => item.patientId).filter(Boolean))
+			);
+			const missingIds = uniquePatientIds.filter(
+				(patientId) => !patientNames[patientId]
+			);
+			if (!missingIds.length) return;
+
+			const entries = await Promise.all(
+				missingIds.map(async (patientId) => {
+					try {
+						const name = await getPatientName(patientId);
+						return [patientId, name] as const;
+					} catch {
+						return [patientId, patientId] as const;
+					}
+				})
+			);
+
+			if (isCancelled) return;
+			setPatientNames((previous) => {
+				const next = { ...previous };
+				entries.forEach(([patientId, name]) => {
+					next[patientId] = name;
+				});
+				return next;
+			});
+		};
+
+		loadPatientNames();
+		return () => {
+			isCancelled = true;
+		};
+	}, [patientNames, sessions]);
 
 	const refreshIceCredentials = async (
 		targetSessionId: string,
@@ -165,7 +256,6 @@ export default function VideoCall() {
 
 		setIsCreatingSession(true);
 		setSession(null);
-		setSessionId("");
 		setHasRefreshedIce(false);
 
 		try {
@@ -173,12 +263,14 @@ export default function VideoCall() {
 				appointmentId: selectedAppointmentId,
 			});
 
-			setSessionId(response.sessionId);
 			toast({
 				title: "Sesion creada",
 				description: "La sesion se creo correctamente.",
 			});
-			await loadSession(response.sessionId);
+			await loadSessions({
+				includeEnded: includeEndedSessions,
+				preferredSessionId: response.sessionId,
+			});
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 			const description =
@@ -200,6 +292,12 @@ export default function VideoCall() {
 		} finally {
 			setIsCreatingSession(false);
 		}
+	};
+
+	const handleSelectSession = async (nextSessionId: string) => {
+		setSelectedSessionId(nextSessionId);
+		setHasRefreshedIce(false);
+		await loadSession(nextSessionId);
 	};
 
 	const handleStartSession = async () => {
@@ -368,6 +466,66 @@ export default function VideoCall() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
+					<div className="flex flex-wrap items-center gap-4">
+						<label className="flex items-center gap-2 text-sm text-slate-600">
+							<Checkbox
+								id="includeEndedSessions"
+								checked={includeEndedSessions}
+								onCheckedChange={(checked) =>
+									setIncludeEndedSessions(Boolean(checked))
+								}
+							/>
+							<span>Incluir sesiones finalizadas</span>
+						</label>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								loadSessions({ includeEnded: includeEndedSessions })
+							}
+							disabled={isLoadingSessions}
+						>
+							{isLoadingSessions ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								<RefreshCw className="h-4 w-4" />
+							)}
+							Recargar sesiones
+						</Button>
+					</div>
+
+					<div className="space-y-2">
+						<label className="text-sm font-medium text-slate-900">
+							Sesiones disponibles
+						</label>
+						<Select
+							value={selectedSessionId}
+							onValueChange={handleSelectSession}
+							disabled={isLoadingSessions || !sessions.length}
+						>
+							<SelectTrigger>
+								<SelectValue
+									placeholder={
+										sessions.length
+											? "Selecciona una sesion"
+											: "No hay sesiones"
+									}
+								/>
+							</SelectTrigger>
+							<SelectContent>
+								{sessions.map((item) => (
+									<SelectItem key={item.sessionId} value={item.sessionId}>
+										{patientNames[item.patientId] ?? item.patientId}{" - "}
+										{getSessionStatusLabel(item.status)}
+										{item.startedAt
+											? ` (${formatDateTime(item.startedAt)})`
+											: ""}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+
 					{isFetchingSession && (
 						<div className="flex items-center gap-2 text-sm text-slate-500">
 							<Loader2 className="h-4 w-4 animate-spin" />
@@ -375,11 +533,20 @@ export default function VideoCall() {
 						</div>
 					)}
 
-					{!session && !isFetchingSession && (
+					{!sessions.length && !isLoadingSessions && (
 						<Alert>
-							<AlertTitle>Sin sesion activa</AlertTitle>
+							<AlertTitle>Sin sesiones</AlertTitle>
 							<AlertDescription>
-								Crea una sesion para visualizar los detalles.
+								No se encontraron sesiones con el filtro actual.
+							</AlertDescription>
+						</Alert>
+					)}
+
+					{!session && !isFetchingSession && sessions.length > 0 && (
+						<Alert>
+							<AlertTitle>Sin sesion seleccionada</AlertTitle>
+							<AlertDescription>
+								Selecciona una sesion para visualizar los detalles.
 							</AlertDescription>
 						</Alert>
 					)}
@@ -401,15 +568,9 @@ export default function VideoCall() {
 							<Table>
 								<TableBody>
 									<TableRow>
-										<TableCell className="text-slate-500">Doctor</TableCell>
-										<TableCell className="text-slate-900">
-											{session.doctorId}
-										</TableCell>
-									</TableRow>
-									<TableRow>
 										<TableCell className="text-slate-500">Paciente</TableCell>
 										<TableCell className="text-slate-900">
-											{session.patientId}
+											{patientNames[session.patientId] ?? session.patientId}
 										</TableCell>
 									</TableRow>
 									<TableRow>
@@ -437,7 +598,9 @@ export default function VideoCall() {
 				</CardContent>
 				<CardFooter className="justify-between">
 					<div className="text-sm text-slate-500">
-						{sessionId ? "Sesion lista para iniciar." : "No hay sesion creada."}
+						{selectedSessionId
+							? "Sesion lista para iniciar."
+							: "No hay sesion creada."}
 					</div>
 					<Button
 						onClick={handleStartSession}
