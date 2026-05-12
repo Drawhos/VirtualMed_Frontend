@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import PatientRegistrationForm from "@/components/PatientRegistrationForm";
+import PatientRegistrationForm from "@/components/registration/PatientRegistrationForm";
 
 export default function Page() {
   return (

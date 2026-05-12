@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AppointmentStatus } from "@/constants/appointmentStatus";
-import { getStatusBadgeName } from "@/lib/utils";
+import { getStatusBadgeName, toLocalISOString } from "@/lib/utils";
 
 // ============================================
 // Props del componente
@@ -538,15 +538,13 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
                       type="datetime-local"
                       {...field}
                       className="pl-10"
-                      min={new Date().toISOString().slice(0, 16)}
-                      max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-                        .toISOString()
-                        .slice(0, 16)}
+                      min={toLocalISOString(new Date())}
+                      max={toLocalISOString(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000))}
                     />
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   </div>
                 </FormControl>
-                <FormDescription>Máximo 1 año en el futuro</FormDescription>
+                <FormDescription>Elija un horario entre 7:00 AM y 7:00 PM</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

@@ -5,6 +5,8 @@ import { UserStatus } from "@/constants/userStatus";
 import { PatientGender } from "@/constants/patientGender";
 import { DiagnosisType } from "@/constants/diagnosisType";
 import { EncounterType } from "@/constants/encounterType";
+import { VideoSessionStatus } from "@/constants/videoSessionStatus";
+import { MessageType } from "@/constants/messageType";
 
 export interface User {
   sub: string;
@@ -190,6 +192,7 @@ export interface AppointmentGetResponse {
   hasClinicalEncounter: boolean;
   createdAt: string;
   updatedAt: string;
+  videoSessionId?: string | null;
 }
 
 export interface AppointmentResponse {
@@ -331,4 +334,42 @@ export interface Medication {
   frequency: string,
   durationDays: number,
   instructions?: string | null
+}
+
+// ============================================
+// VIDEO SESSION TYPES
+// ============================================
+export interface VideoSession {
+  sessionId: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  status: VideoSessionStatus;
+  roomToken: string;
+  tokenExpiresAt: string;
+  startedAt: string;
+  endedAt: string;
+  endReason?: string | null;
+}
+
+export interface VideoChatMessage {
+  id: string;
+  videoSessionId: string; //uuid de sessionId publico
+  senderId: string;
+  message: string;
+  sentAt: string;
+  messageType: MessageType;
+}
+
+export interface IceServer {
+  urls: string[];
+  username?: string;
+  credential?: string;
+}
+
+export interface IceCredentials {
+  sessionId: string;
+  roomToken: string;
+  tokenExpiresAt: string;
+  iceServers: [IceServer];
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import PatientRegistrationForm from '../PatientRegistrationForm';
+import PatientRegistrationForm from '../registration/PatientRegistrationForm';
 import { authService } from '@/lib/api/auth.service';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';

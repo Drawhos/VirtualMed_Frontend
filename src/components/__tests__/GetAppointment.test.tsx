@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ListAppointmentsComponent from '../appointments/getAppointment';
 import { doctorService } from '@/lib/api/doctor.service';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import { AppointmentStatus } from '@/constants/appointmentStatus';
 import axios from 'axios';
 
@@ -15,6 +16,21 @@ vi.mock('@/lib/api/doctor.service', () => ({
 }));
 
 vi.mock('@/hooks/use-toast');
+vi.mock('next/navigation', () => ({ useRouter: vi.fn() }));
+
+beforeAll(() => {
+  if (!global.ResizeObserver) {
+    global.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as typeof ResizeObserver;
+  }
+
+  if (!HTMLElement.prototype.scrollIntoView) {
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  }
+});
 
 // Mock data
 const mockAppointments = [
@@ -68,6 +84,7 @@ describe('ListAppointmentsComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useToast as ReturnType<typeof vi.fn>).mockReturnValue({ toast: mockToast });
+    (useRouter as ReturnType<typeof vi.fn>).mockReturnValue({ push: vi.fn() });
     vi.mocked(doctorService.getAppointments).mockResolvedValue(mockAppointments);
   });
 

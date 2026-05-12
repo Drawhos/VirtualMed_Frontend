@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, MessageCircle } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, Video, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -52,6 +52,9 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
       { label: 'Ver encuentros', href: '/dashboard/doctor/encounters/list', requiredPermissions: ['ClinicalEncounter:Read'] },
     ],
   },
+  {
+    id: 'doctor-video-sessions', label: 'Sesiones Médicas', href: '/dashboard/doctor/video-sessions', icon: Video, requiredPermissions: ['VideoSession:Create'] 
+  }
 ];
 
 const PATIENT_NAV_ITEMS: NavItem[] = [

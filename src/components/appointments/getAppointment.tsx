@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import { Loader2, Search } from "lucide-react";
 
@@ -25,6 +26,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AppointmentStatus } from "@/constants/appointmentStatus";
 import { AppointmentGetResponse } from "@/types";
 import { getStatusBadgeName, getStatusBadgeVariant } from "@/lib/utils";
@@ -43,9 +50,11 @@ interface Filters {
 // ============================================
 export default function ListAppointmentsComponent() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentGetResponse[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<AppointmentGetResponse[]>([]);
+  const [joiningAppointmentId, setJoiningAppointmentId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     fromDate: "",
     toDate: "",
@@ -155,6 +164,36 @@ export default function ListAppointmentsComponent() {
     setFilteredAppointments([]);
   };
 
+  const handleJoinVideoSession = async (appointment: AppointmentGetResponse) => {
+    const sessionId = appointment.videoSessionId?.trim();
+    if (!sessionId) {
+      toast({
+        title: "La videollamada no ha empezado",
+        description: "El doctor aún no ha habilitado la sesión.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setJoiningAppointmentId(appointment.id);
+    try {
+      await doctorService.postIceCredentials(sessionId);
+      router.push(`/dashboard/video-session/${sessionId}`);
+    } catch (error) {
+      const description = isAxiosError(error)
+        ? error.response?.data?.message || "No se pudo iniciar la videollamada."
+        : "No se pudo iniciar la videollamada.";
+
+      toast({
+        title: "Error",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setJoiningAppointmentId(null);
+    }
+  };
+
   return (
     <div className="w-full space-y-6 p-6 pt-16">
       {/* Título */}
@@ -246,58 +285,93 @@ export default function ListAppointmentsComponent() {
 
       {/* Tabla de citas */}
       {filteredAppointments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Citas ({filteredAppointments.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Doctor</TableHead>
-                    <TableHead>Fecha y Hora</TableHead>
-                    <TableHead>Duración (min)</TableHead>
-                    <TableHead>Razón</TableHead>
-                    <TableHead>Estado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAppointments.map((appointment) => (
-                    <TableRow key={appointment.id}>
-                      <TableCell className="font-medium">
-                        {appointment.doctorFullName}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(appointment.scheduledAt).toLocaleString(
-                          "es-ES",
-                          {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </TableCell>
-                      <TableCell>{appointment.durationMinutes}</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {appointment.reason || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(appointment.status)}>
-                          {getStatusBadgeName(appointment.status)}
-                        </Badge>
-                      </TableCell>
+        <TooltipProvider>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                Citas ({filteredAppointments.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Fecha y Hora</TableHead>
+                      <TableHead>Duración (min)</TableHead>
+                      <TableHead>Razón</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Videollamada</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAppointments.map((appointment) => {
+                      const isJoinDisabled =
+                        !appointment.videoSessionId ||
+                        joiningAppointmentId === appointment.id;
+                      const tooltipMessage = appointment.videoSessionId
+                        ? "Unirse a la videollamada"
+                        : "La videollamada no ha empezado";
+
+                      return (
+                        <TableRow key={appointment.id}>
+                          <TableCell className="font-medium">
+                            {appointment.doctorFullName}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(appointment.scheduledAt).toLocaleString(
+                              "es-ES",
+                              {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </TableCell>
+                          <TableCell>{appointment.durationMinutes}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {appointment.reason || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                              {getStatusBadgeName(appointment.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {appointment.status !== AppointmentStatus.COMPLETED ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex" tabIndex={0}>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleJoinVideoSession(appointment)}
+                                    disabled={isJoinDisabled}
+                                  >
+                                    {joiningAppointmentId === appointment.id && (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    Unirse
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{tooltipMessage}</TooltipContent>
+                            </Tooltip>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Finalizada</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TooltipProvider>
       )}
 
       {/* Estado vacío */}
