@@ -83,7 +83,7 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     label: 'Métricas Vitales',
     href: '/dashboard/patient/vital-metrics',
     icon: Heart,
-    requiredPermissions: ['VitalMetric:Read'],
+    requiredPermissions: ['VitalSign:Read'],
   },
 ];
 
