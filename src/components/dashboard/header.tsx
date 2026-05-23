@@ -69,12 +69,10 @@ export function Header() {
     router.push('/login');
   };
 
-  if (!user) return null;
-
   const alertsQuery = useQuery({
     queryKey: ['health-alerts', 'me'],
     queryFn: () => vitalSignService.getMyAlerts({ page: 1, pageSize: 20 }),
-    enabled: user.permission?.includes('Alert:Read') ?? false,
+    enabled: user?.permission?.includes('Alert:Read') ?? false,
     refetchInterval: 30000,
   });
 
@@ -93,17 +91,20 @@ export function Header() {
     },
   });
 
-  const initials = user.fullName.split(' ')
-    .map((word) => word[0])
+  const initials = (user?.fullName ?? '')
+    .split(' ')
+    .map((word) => word[0] ?? '')
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
-  const statusColor = user.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500';
+  const statusColor = (user?.status === 'Active') ? 'bg-green-500' : 'bg-yellow-500';
 
   const alerts = alertsQuery.data?.items ?? [];
   const unreadCount = useMemo(() => alerts.filter((alert) => !alert.isRead).length, [alerts]);
-  const canReadAlerts = user.permission?.includes('Alert:Read') ?? false;
+  const canReadAlerts = user?.permission?.includes('Alert:Read') ?? false;
+
+  if (!user) return null;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
