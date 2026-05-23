@@ -380,7 +380,7 @@ function MetricChip({
       disabled={disabled}
       className={[
         'h-auto gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all',
-        active ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800' : 'bg-white text-slate-700 hover:bg-slate-100',
+        active ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700' : 'bg-white text-slate-700 hover:bg-slate-100',
       ].join(' ')}
     >
       <Icon className="h-4 w-4" />
@@ -407,7 +407,7 @@ function RangeChip({
       onClick={onClick}
       className={[
         'h-auto rounded-full px-4 py-2 text-sm transition-all',
-        active ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-white text-slate-700 hover:bg-slate-100',
+        active ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-slate-700 hover:bg-slate-100',
       ].join(' ')}
     >
       {option.label}
@@ -657,7 +657,7 @@ export function VitalMetricsDashboardView() {
         <Card className="relative overflow-hidden border-slate-200 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
           <CardContent className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
-              <Badge className="border-0 bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
+              <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                 Dashboard del paciente
               </Badge>
               <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">Tu tablero de salud está listo para recibir mediciones</h1>
@@ -706,7 +706,7 @@ export function VitalMetricsDashboardView() {
               <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-br from-cyan-50 via-white to-emerald-50" />
               <div className="relative">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Badge className="border-0 bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
+                  <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                     Dashboard del paciente
                   </Badge>
                   <Badge className="border-0 bg-cyan-100 px-3 py-1 text-cyan-800">{availableMetrics.length} métricas visibles</Badge>

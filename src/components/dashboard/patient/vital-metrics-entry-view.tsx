@@ -296,7 +296,7 @@ export function VitalMetricsEntryView() {
       <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-[0_20px_70px_rgba(2,6,23,0.08)]">
         <CardContent className="grid gap-8 p-0 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="p-8">
-            <Badge className="border-0 bg-slate-900 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Métricas vitales</Badge>
+            <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Métricas vitales</Badge>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">Registro de métricas del paciente</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Registra manualmente una o varias lecturas, o carga un JSON cargado con lecturas simuladas.
@@ -319,11 +319,11 @@ export function VitalMetricsEntryView() {
       <Tabs defaultValue="manual" className="space-y-5">
         <TabsList className="h-12 rounded-2xl bg-slate-100 p-1">
           <TabsTrigger value="manual" className="h-10 rounded-xl px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Activity className="mr-2 h-4 w-4" />
+            <Activity className="mr-2 h-4 w-4 text-blue-600" />
             Ingreso manual
           </TabsTrigger>
           <TabsTrigger value="simulated" className="h-10 rounded-xl px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <FileJson2 className="mr-2 h-4 w-4" />
+            <FileJson2 className="mr-2 h-4 w-4 text-blue-600" />
             Carga JSON simulado
           </TabsTrigger>
         </TabsList>
@@ -428,7 +428,7 @@ export function VitalMetricsEntryView() {
                     Agregar lectura
                   </Button>
 
-                  <Button type="submit" disabled={isSubmitting} className="rounded-full bg-slate-900 px-6 text-white hover:bg-slate-800">
+                  <Button type="submit" disabled={isSubmitting} className="rounded-full bg-blue-600 px-6 text-white hover:bg-slate-800">
                     <Save className="mr-2 h-4 w-4" />
                     {manualMutation.isPending ? 'Guardando...' : 'Guardar lecturas'}
                   </Button>
@@ -472,7 +472,7 @@ export function VitalMetricsEntryView() {
                     Limpiar JSON
                   </Button>
 
-                  <Button type="submit" disabled={isSubmitting} className="rounded-full bg-cyan-600 px-6 text-white hover:bg-cyan-700">
+                  <Button type="submit" disabled={isSubmitting} className="rounded-full bg-blue-600 px-6 text-white hover:bg-cyan-700">
                     <UploadCloud className="mr-2 h-4 w-4" />
                     {simulatedMutation.isPending ? 'Sincronizando...' : 'Sincronizar JSON'}
                   </Button>
