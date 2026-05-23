@@ -343,6 +343,26 @@ export interface AlertThresholdInput {
   alertLevel: AlertLevel;
 }
 
+export type AlertSeverity = 'Info' | 'Warning' | 'Critical';
+
+export interface HealthAlert {
+  id: string;
+  patientId: string;
+  vitalSignReadingId?: string;
+  alertType: string;
+  message: string;
+  severity: AlertSeverity;
+  isRead: boolean;
+  occurredAt: string;
+}
+
+export interface HealthAlertsResponse {
+  items: HealthAlert[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface AuditLogFilters {
   tableName?: string;
   operation?: AuditOperationCode;

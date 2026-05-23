@@ -31,6 +31,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/store/auth.store';
 import { vitalSignService } from '@/lib/api/vital-sign.service';
 import {
+  AlertLevel,
+  AlertThreshold,
   VitalReading,
   VitalReadingSource,
   VitalReadingsResponse,
@@ -358,6 +360,124 @@ function getInsightLabel(metric: DashboardMetric) {
   }
 }
 
+type ThresholdSignal = {
+  outOfRange: boolean;
+  level: AlertLevel;
+  message: string;
+};
+
+function getThresholdSignal(
+  metric: DashboardMetric,
+  response: VitalReadingsResponse | undefined,
+  activeThresholds: Map<VitalSignType, AlertThreshold>
+): ThresholdSignal {
+  const latest = getLatestMetricValue(metric, response);
+  if (!latest) {
+    return {
+      outOfRange: false,
+      level: 'Low',
+      message: 'Sin lectura reciente para evaluar contra umbrales.',
+    };
+  }
+
+  const levelPriority: Record<AlertLevel, number> = { Low: 1, Medium: 2, High: 3 };
+
+  const evaluate = (type: VitalSignType, value: number | null) => {
+    if (typeof value !== 'number') return null;
+    const threshold = activeThresholds.get(type);
+    if (!threshold) return null;
+
+    const out = value < threshold.minValue || value > threshold.maxValue;
+    if (!out) return null;
+
+    return {
+      type,
+      level: threshold.alertLevel,
+      min: threshold.minValue,
+      max: threshold.maxValue,
+      value,
+    };
+  };
+
+  if (metric === 'BloodPressure') {
+    const breaches = [
+      evaluate('BloodPressureSystolic', latest.value),
+      evaluate('BloodPressureDiastolic', latest.secondaryValue ?? null),
+    ].filter((item): item is NonNullable<typeof item> => item !== null);
+
+    if (!breaches.length) {
+      return {
+        outOfRange: false,
+        level: 'Low',
+        message: 'Tu presión arterial actual está dentro de los umbrales configurados.',
+      };
+    }
+
+    const highest = breaches.reduce((acc, cur) => (levelPriority[cur.level] > levelPriority[acc.level] ? cur : acc));
+
+    return {
+      outOfRange: true,
+      level: highest.level,
+      message: `Alerta: presión fuera de umbral (${highest.type === 'BloodPressureSystolic' ? 'sistólica' : 'diastólica'} ${highest.value}, rango ${highest.min}-${highest.max}).`,
+    };
+  }
+
+  const breach = evaluate(metric as VitalSignType, latest.value);
+  if (!breach) {
+    return {
+      outOfRange: false,
+      level: 'Low',
+      message: `${VITAL_META[metric].label} dentro de los umbrales configurados.`,
+    };
+  }
+
+  return {
+    outOfRange: true,
+    level: breach.level,
+    message: `Alerta: ${VITAL_META[metric].label.toLowerCase()} fuera de umbral (${breach.value}, rango ${breach.min}-${breach.max}).`,
+  };
+}
+
+function getSignalStyles(signal: ThresholdSignal) {
+  if (!signal.outOfRange) {
+    return {
+      container: 'border-slate-200 bg-white',
+      title: 'text-slate-500',
+      body: 'text-slate-700',
+      badge: 'bg-emerald-100 text-emerald-800',
+      badgeText: 'OK',
+    };
+  }
+
+  if (signal.level === 'High') {
+    return {
+      container: 'border-rose-200 bg-rose-50',
+      title: 'text-rose-700',
+      body: 'text-rose-900',
+      badge: 'bg-rose-100 text-rose-800',
+      badgeText: 'HIGH',
+    };
+  }
+
+  if (signal.level === 'Medium') {
+    return {
+      container: 'border-amber-200 bg-amber-50',
+      title: 'text-amber-700',
+      body: 'text-amber-900',
+      badge: 'bg-amber-100 text-amber-800',
+      badgeText: 'MEDIUM',
+    };
+  }
+
+  return {
+    container: 'border-emerald-200 bg-emerald-50',
+    title: 'text-emerald-700',
+    body: 'text-emerald-900',
+    badge: 'bg-emerald-100 text-emerald-800',
+    badgeText: 'LOW',
+  };
+}
+
 function MetricChip({
   metric,
   active,
@@ -565,6 +685,12 @@ export function VitalMetricsDashboardView() {
     enabled: !!user && user.role === 'Patient',
   });
 
+  const thresholdsQuery = useQuery({
+    queryKey: ['alert-thresholds', 'me'],
+    queryFn: () => vitalSignService.getMyAlertThresholds(),
+    enabled: !!user && user.role === 'Patient',
+  });
+
   const rangeParams = useMemo(() => getUtcRangeByDays(days), [days, vitalReadingsQuery.dataUpdatedAt]);
 
   const response = vitalReadingsQuery.data;
@@ -608,6 +734,22 @@ export function VitalMetricsDashboardView() {
   const selectedAverage = getMetricAverage(selectedMetric, response);
   const trendText = getTrendLabel(selectedMetric, response);
 
+  const activeThresholds = useMemo(() => {
+    const map = new Map<VitalSignType, AlertThreshold>();
+
+    (thresholdsQuery.data ?? [])
+      .filter((threshold) => threshold.isActive)
+      .forEach((threshold) => map.set(threshold.vitalSignType, threshold));
+
+    return map;
+  }, [thresholdsQuery.data]);
+
+  const thresholdSignal = useMemo(
+    () => getThresholdSignal(selectedMetric, response, activeThresholds),
+    [selectedMetric, response, activeThresholds]
+  );
+  const thresholdStyles = getSignalStyles(thresholdSignal);
+
   const handleRefresh = async () => {
     await vitalReadingsQuery.refetch();
   };
@@ -640,7 +782,7 @@ export function VitalMetricsDashboardView() {
                 Intenta actualizar la vista. Si el problema persiste, revisa que tu sesión siga activa o vuelve a iniciar sesión.
               </p>
             </div>
-            <Button onClick={handleRefresh} className="gap-2 rounded-full bg-slate-900 px-5 text-white hover:bg-slate-800">
+            <Button onClick={handleRefresh} className="gap-2 rounded-full bg-blue-600 px-5 text-white hover:bg-blue-700">
               <RefreshCw className="h-4 w-4" />
               Reintentar
             </Button>
@@ -780,9 +922,14 @@ export function VitalMetricsDashboardView() {
                 </Button>
               </div>
 
-              <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Mensaje de salud</p>
-                <p className="mt-3 text-base leading-7 text-slate-700">{trendText}</p>
+              <div className={`mt-6 rounded-[28px] border p-5 shadow-sm ${thresholdStyles.container}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className={`text-sm font-medium uppercase tracking-[0.18em] ${thresholdStyles.title}`}>Mensaje de salud</p>
+                  <Badge className={`border-0 px-2.5 py-1 text-[11px] ${thresholdStyles.badge}`}>{thresholdStyles.badgeText}</Badge>
+                </div>
+                <p className={`mt-3 text-base leading-7 ${thresholdStyles.body}`}>
+                  {thresholdSignal.outOfRange ? thresholdSignal.message : trendText}
+                </p>
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">

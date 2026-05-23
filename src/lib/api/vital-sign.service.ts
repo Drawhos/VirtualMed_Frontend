@@ -2,6 +2,7 @@ import apiClient from './axios';
 import {
   AlertThreshold,
   AlertThresholdInput,
+  HealthAlertsResponse,
   VitalReadingInput,
   VitalReadingsBatchRequest,
   VitalReadingsResponse,
@@ -16,6 +17,12 @@ export interface VitalReadingsQueryParams {
   page?: number;
   pageSize?: number;
   includeSummary?: boolean;
+}
+
+export interface HealthAlertsQueryParams {
+  unreadOnly?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
 export const vitalSignService = {
@@ -87,5 +94,21 @@ export const vitalSignService = {
 
   deleteMyAlertThreshold: async (id: string): Promise<void> => {
     await apiClient.delete(`/Patients/me/alert-thresholds/${id}`);
+  },
+
+  getMyAlerts: async (params: HealthAlertsQueryParams = {}): Promise<HealthAlertsResponse> => {
+    const response = await apiClient.get<HealthAlertsResponse>('/Patients/me/alerts', {
+      params: {
+        unreadOnly: params.unreadOnly,
+        page: params.page ?? 1,
+        pageSize: params.pageSize ?? 20,
+      },
+    });
+
+    return response.data;
+  },
+
+  markAlertAsRead: async (id: string): Promise<void> => {
+    await apiClient.patch(`/alerts/${id}/read`);
   },
 };
