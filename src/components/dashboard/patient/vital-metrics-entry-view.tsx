@@ -393,7 +393,8 @@ export function VitalMetricsEntryView() {
                       <div className="space-y-2">
                         <Label>Unidad</Label>
                         <Input
-                          value={row.unit}
+                          value={DEFAULT_UNIT_BY_TYPE[row.type]}
+                          disabled
                           onChange={(event) => updateReading(row.id, { unit: event.target.value })}
                           placeholder={DEFAULT_UNIT_BY_TYPE[row.type]}
                         />

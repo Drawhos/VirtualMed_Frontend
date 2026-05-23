@@ -34,25 +34,28 @@ function formatDateTime(value?: string) {
 }
 
 function getAlertLevel(alert: HealthAlert): AlertLevel {
-  const fromAlertType = alert.alertType?.split(':').pop()?.toLowerCase();
-
-  if (fromAlertType === 'low') return 'Low';
-  if (fromAlertType === 'medium') return 'Medium';
-  if (fromAlertType === 'high') return 'High';
-
   const severityMap: Record<AlertSeverity, AlertLevel> = {
     Info: 'Low',
     Warning: 'Medium',
     Critical: 'High',
   };
 
-  return severityMap[alert.severity] ?? 'Medium';
+  const levelFromSeverity = severityMap[alert.severity];
+  if (levelFromSeverity) return levelFromSeverity;
+
+  const fromAlertType = alert.alertType?.split(':').pop()?.toLowerCase();
+
+  if (fromAlertType === 'low') return 'Low';
+  if (fromAlertType === 'medium') return 'Medium';
+  if (fromAlertType === 'high') return 'High';
+
+  return 'Medium';
 }
 
 function getAlertBadgeStyle(level: AlertLevel) {
   if (level === 'High') return 'bg-rose-100 text-rose-800 border-rose-200';
   if (level === 'Medium') return 'bg-amber-100 text-amber-800 border-amber-200';
-  return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  return 'bg-blue-100 text-blue-800 border-blue-200';
 }
 
 export function Header() {

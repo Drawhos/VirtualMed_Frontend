@@ -470,10 +470,10 @@ function getSignalStyles(signal: ThresholdSignal) {
   }
 
   return {
-    container: 'border-emerald-200 bg-emerald-50',
-    title: 'text-emerald-700',
-    body: 'text-emerald-900',
-    badge: 'bg-emerald-100 text-emerald-800',
+    container: 'border-blue-200 bg-blue-50',
+    title: 'text-blue-700',
+    body: 'text-blue-900',
+    badge: 'bg-blue-100 text-blue-800',
     badgeText: 'LOW',
   };
 }
