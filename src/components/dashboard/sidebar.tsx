@@ -92,6 +92,13 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     icon: Heart,
     requiredPermissions: ['VitalSign:Read'],
   },
+  {
+    id: 'patient-thresholds',
+    label: 'Umbrales',
+    href: '/dashboard/patient/thresholds',
+    icon: ShieldCheck,
+    requiredPermissions: ['AlertThreshold:Read'],
+  },
 ];
 
 const ADMIN_NAV_ITEMS: NavItem[] = [

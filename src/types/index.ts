@@ -321,6 +321,28 @@ export interface VitalReadingsSyncRequest {
   readings: VitalReadingInput[];
 }
 
+export type AlertLevel = 'Low' | 'Medium' | 'High';
+
+export interface AlertThreshold {
+  id: string;
+  patientId?: string;
+  vitalSignType: VitalSignType;
+  minValue: number;
+  maxValue: number;
+  isActive: boolean;
+  alertLevel: AlertLevel;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AlertThresholdInput {
+  vitalSignType: VitalSignType;
+  minValue: number;
+  maxValue: number;
+  isActive: boolean;
+  alertLevel: AlertLevel;
+}
+
 export interface AuditLogFilters {
   tableName?: string;
   operation?: AuditOperationCode;

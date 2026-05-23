@@ -1,5 +1,7 @@
 import apiClient from './axios';
 import {
+  AlertThreshold,
+  AlertThresholdInput,
   VitalReadingInput,
   VitalReadingsBatchRequest,
   VitalReadingsResponse,
@@ -66,5 +68,24 @@ export const vitalSignService = {
   syncSimulatedReadings: async (payload: VitalReadingsSyncRequest): Promise<unknown> => {
     const response = await apiClient.post('/wearables/simulated/sync', payload);
     return response.data;
+  },
+
+  getMyAlertThresholds: async (): Promise<AlertThreshold[]> => {
+    const response = await apiClient.get<AlertThreshold[]>('/Patients/me/alert-thresholds');
+    return response.data;
+  },
+
+  createMyAlertThreshold: async (payload: AlertThresholdInput): Promise<AlertThreshold> => {
+    const response = await apiClient.post<AlertThreshold>('/Patients/me/alert-thresholds', payload);
+    return response.data;
+  },
+
+  updateMyAlertThreshold: async (id: string, payload: AlertThresholdInput): Promise<AlertThreshold> => {
+    const response = await apiClient.put<AlertThreshold>(`/Patients/me/alert-thresholds/${id}`, payload);
+    return response.data;
+  },
+
+  deleteMyAlertThreshold: async (id: string): Promise<void> => {
+    await apiClient.delete(`/Patients/me/alert-thresholds/${id}`);
   },
 };
