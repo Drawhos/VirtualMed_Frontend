@@ -258,6 +258,111 @@ export interface AuditLog {
   appUserId?: string | null;
 }
 
+// ============================================
+// VITAL SIGNS TYPES
+// ============================================
+export type VitalSignType =
+  | 'HeartRate'
+  | 'Steps'
+  | 'BloodPressureSystolic'
+  | 'BloodPressureDiastolic'
+  | 'Weight'
+  | 'Glucose'
+  | 'SpO2';
+
+export type VitalReadingSource = 'Manual' | 'Simulated';
+
+export interface VitalReading {
+  id: string;
+  patientId: string;
+  vitalSignType: VitalSignType;
+  value: number;
+  unit: string;
+  readingAt: string;
+  source: VitalReadingSource;
+  createdAt: string;
+}
+
+export interface VitalReadingSummary {
+  id: string;
+  value: number;
+  unit: string;
+  readingAt: string;
+  source: VitalReadingSource;
+}
+
+export interface VitalReadingsPage {
+  items: VitalReading[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
+export interface VitalReadingsResponse {
+  page: VitalReadingsPage;
+  latestByType: Partial<Record<VitalSignType, VitalReadingSummary>>;
+  averages7d: Partial<Record<VitalSignType, number>>;
+}
+
+export interface VitalReadingInput {
+  type: VitalSignType;
+  value: number;
+  unit?: string;
+  readingAt?: string;
+  notes?: string;
+}
+
+export interface VitalReadingsBatchRequest {
+  readings: VitalReadingInput[];
+}
+
+export interface VitalReadingsSyncRequest {
+  patientId?: string | null;
+  readings: VitalReadingInput[];
+}
+
+export type AlertLevel = 'Low' | 'Medium' | 'High';
+
+export interface AlertThreshold {
+  id: string;
+  patientId?: string;
+  vitalSignType: VitalSignType;
+  minValue: number;
+  maxValue: number;
+  isActive: boolean;
+  alertLevel: AlertLevel;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AlertThresholdInput {
+  vitalSignType: VitalSignType;
+  minValue: number;
+  maxValue: number;
+  isActive: boolean;
+  alertLevel: AlertLevel;
+}
+
+export type AlertSeverity = 'Info' | 'Warning' | 'Critical';
+
+export interface HealthAlert {
+  id: string;
+  patientId: string;
+  vitalSignReadingId?: string;
+  alertType: string;
+  message: string;
+  severity: AlertSeverity;
+  isRead: boolean;
+  occurredAt: string;
+}
+
+export interface HealthAlertsResponse {
+  items: HealthAlert[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface AuditLogFilters {
   tableName?: string;
   operation?: AuditOperationCode;

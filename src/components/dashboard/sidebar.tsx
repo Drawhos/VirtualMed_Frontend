@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, Video, MessageCircle } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, Video, MessageCircle, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -33,6 +33,7 @@ interface NavGroupItem {
 type NavItem = NavLinkItem | NavGroupItem;
 
 const DOCTOR_NAV_ITEMS: NavItem[] = [
+  { id: 'doctor-dashboard', label: 'Dashboard', href: '/dashboard/doctor', icon: Home },
   {
     id: 'doctor-appointments',
     label: 'Citas',
@@ -58,6 +59,12 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
 ];
 
 const PATIENT_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'patient-dashboard',
+    label: 'Dashboard',
+    icon: Home,
+    href: '/dashboard/patient',
+  },
   {
     id: 'patient-appointments',
     label: 'Mis Citas',
@@ -85,9 +92,17 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     icon: Heart,
     requiredPermissions: ['VitalSign:Read'],
   },
+  {
+    id: 'patient-thresholds',
+    label: 'Umbrales',
+    href: '/dashboard/patient/thresholds',
+    icon: ShieldCheck,
+    requiredPermissions: ['AlertThreshold:Read'],
+  },
 ];
 
 const ADMIN_NAV_ITEMS: NavItem[] = [
+  { id: 'admin-dashboard', label: 'Dashboard', href: '/dashboard/admin', icon: Home },
   { id: 'admin-audit-logs', label: 'Logs Auditoría', href: '/dashboard/admin/audit-logs', icon: ShieldCheck },
   {
     id: 'admin-appointments',
@@ -138,7 +153,14 @@ export function Sidebar() {
     return requiredPermissions.some((p) => permissions.includes(p));
   }, [user?.permission]);
 
-  const isActive = useCallback((href: string) => pathname === href || pathname.startsWith(href + '/'), [pathname]);
+  const isActive = useCallback((href: string) => {
+    const isDashboardRoot = /^\/dashboard\/(admin|doctor|patient)$/i.test(href);
+    if (isDashboardRoot) {
+      return pathname === href;
+    }
+
+    return pathname === href || pathname.startsWith(href + '/');
+  }, [pathname]);
 
   const navItems = useMemo(() => {
     const roleItems = userRole ? (ROLE_NAV_ITEMS[userRole] ?? []) : [];
