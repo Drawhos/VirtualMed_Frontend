@@ -363,6 +363,41 @@ export interface HealthAlertsResponse {
   totalCount: number;
 }
 
+// ============================================
+// RISK SCORE TYPES
+// ============================================
+export interface CardiovascularRiskOverridesInput {
+  smoker: 0 | 1;
+  physicalActivityLevel: 0 | 1;
+  systolicBp: number;
+  diastolicBp: number;
+  bmi: number;
+  familyHistoryCvd?: 0 | 1 | null;
+  cholesterolTotal?: 1 | 2 | 3 | null;
+  glucoseMgDl?: 1 | 2 | 3 | null;
+}
+
+export interface CalculateCardiovascularRiskRequest {
+  overrides: CardiovascularRiskOverridesInput;
+}
+
+export interface RiskScore {
+  id: string;
+  patientId: string;
+  score: number;
+  riskLevel: string;
+  modelVersion: string;
+  disclaimerVersion: string;
+  calculatedAt: string;
+}
+
+export interface RiskScoresResponse {
+  items: RiskScore[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface AuditLogFilters {
   tableName?: string;
   operation?: AuditOperationCode;

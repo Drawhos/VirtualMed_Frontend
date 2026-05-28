@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, Video, MessageCircle, Home } from 'lucide-react';
+import { Calendar, Users, FileText, Heart, Settings, Menu, X, Stethoscope, ShieldCheck, ChevronDown, Video, MessageCircle, Home, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type ComponentType, useCallback, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/constants/userRole';
@@ -98,6 +98,13 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     href: '/dashboard/patient/thresholds',
     icon: ShieldCheck,
     requiredPermissions: ['AlertThreshold:Read'],
+  },
+  {
+    id: 'patient-risk-scores',
+    label: 'Riesgo cardiovascular',
+    href: '/dashboard/patient/risk-scores',
+    icon: Activity,
+    requiredPermissions: ['RiskScore:Read'],
   },
 ];
 
