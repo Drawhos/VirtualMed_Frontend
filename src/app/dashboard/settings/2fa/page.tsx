@@ -46,15 +46,9 @@ export default function TwoFactorPage() {
         <div className="flex justify-center py-16 px-6">
             <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-10">
 
-                <div className="flex items-center justify-between mb-10 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div className="flex items-center justify-between mb-7 dark:border-slate-800 pb-6">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 p-3 rounded-xl">
-                            <Shield className="text-primary w-6 h-6" />
-                        </div>
                         <div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                VirtualMed
-                            </p>
                             <p className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Ajustes de Seguridad
                             </p>
@@ -76,7 +70,7 @@ export default function TwoFactorPage() {
                         <button
                             onClick={handleEnable}
                             disabled={loading}
-                            className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition"
+                            className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition"
                         >
                             {loading ? 'Generando...' : 'Activar 2FA'}
                         </button>
@@ -150,7 +144,7 @@ export default function TwoFactorPage() {
                                 <button
                                     onClick={handleVerify}
                                     disabled={loading}
-                                    className="bg-primary text-white px-6 py-3 rounded-xl font-semibold"
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold"
                                 >
                                     Verificar
                                 </button>
@@ -171,7 +165,7 @@ export default function TwoFactorPage() {
                     </div>
                 )}
 
-                <div className="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-center gap-8 text-xs text-slate-400 dark:text-slate-500">
+                <div className="mt-8 pt-6 border-slate-200 dark:border-slate-800 flex justify-center gap-8 text-xs text-slate-400 dark:text-slate-500">
                     <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4" />
                         <span>Encriptado end-to-end</span>
