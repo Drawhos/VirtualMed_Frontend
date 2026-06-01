@@ -237,6 +237,7 @@ export const LoginForm = () => {
                 <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                   <FormControl>
                     <Checkbox
+                      className="data-[state=checked]:bg-blue-600"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isLoading}
@@ -259,7 +260,7 @@ export const LoginForm = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:pointer-events-none"
             disabled={isLoading}
             size="lg"
           >
