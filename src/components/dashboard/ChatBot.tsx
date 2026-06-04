@@ -1,38 +1,50 @@
 // src/components/dashboard/ChatBot.tsx
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useChatSession } from '@/hooks/use-chat-session';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Loader } from 'lucide-react';
 import { MarkdownContent } from '@/components/MarkdownContent';
-import { chatbotService, type ChatbotSource } from '@/lib/api/chatbot.service';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { chatbotService } from '@/lib/api/chatbot.service';
+import type { ChatMessage, ChatSource } from '@/types';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-interface Message {
+const WELCOME_MESSAGE =
+  'Hola, soy el Asistente VirtualMed. ¿Cómo puedo ayudarte hoy? Puedo brindarte información basada en protocolos clínicos verificados.';
+
+interface UiMessage {
   id: string;
   type: 'user' | 'assistant';
   content: string;
-  sources?: ChatbotSource[];
+  sources?: ChatSource[];
   timestamp: Date;
 }
 
+function mapApiMessage(message: ChatMessage): UiMessage {
+  return {
+    id: message.id,
+    type: message.role === 'User' ? 'user' : 'assistant',
+    content: message.content,
+    sources: message.sources ?? undefined,
+    timestamp: new Date(message.createdAt),
+  };
+}
+
 export function ChatBot() {
-  const { sessionId } = useChatSession();
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<UiMessage[]>([
     {
-      id: '1',
+      id: 'welcome',
       type: 'assistant',
-      content: 'Hola, soy el Asistente VirtualMed. ¿Cómo puedo ayudarte hoy? Puedo brindarte información basada en protocolos clínicos verificados.',
+      content: WELCOME_MESSAGE,
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll al nuevo mensaje
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -41,13 +53,43 @@ export function ChatBot() {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading || !sessionId) return;
+  const loadConversation = useCallback(async () => {
+    setIsInitializing(true);
+    try {
+      const conversation = await chatbotService.getConversation();
+      if (conversation.messages.length > 0) {
+        setMessages(conversation.messages.map(mapApiMessage));
+      } else {
+        setMessages([
+          {
+            id: 'welcome',
+            type: 'assistant',
+            content: WELCOME_MESSAGE,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error cargando conversación:', error);
+    } finally {
+      setIsInitializing(false);
+    }
+  }, []);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+  useEffect(() => {
+    loadConversation();
+  }, [loadConversation]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading || isInitializing) return;
+
+    const messageText = input.trim();
+    const optimisticId = `temp-${Date.now()}`;
+
+    const userMessage: UiMessage = {
+      id: optimisticId,
       type: 'user',
-      content: input,
+      content: messageText,
       timestamp: new Date(),
     };
 
@@ -56,24 +98,21 @@ export function ChatBot() {
     setIsLoading(true);
 
     try {
-      const data = await chatbotService.sendMessage({
-        session_id: sessionId,
-        message: input,
+      const data = await chatbotService.sendMessage(messageText);
+
+      setMessages((prev) => {
+        const withoutOptimistic = prev.filter((m) => m.id !== optimisticId);
+        return [
+          ...withoutOptimistic,
+          mapApiMessage(data.userMessage),
+          mapApiMessage(data.assistantMessage),
+        ];
       });
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: data.answer,
-        sources: data.sources,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error enviando mensaje:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 2).toString(),
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      const errorMessage: UiMessage = {
+        id: `error-${Date.now()}`,
         type: 'assistant',
         content: 'Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.',
         timestamp: new Date(),
@@ -93,70 +132,73 @@ export function ChatBot() {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 shadow-sm mt-14">
-      {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4  flex-shrink-0">
+      <div className="border-b border-gray-200 px-6 py-4 flex-shrink-0">
         <h1 className="text-xl font-semibold text-blue-600">Asistente VirtualMed</h1>
         <p className="text-sm text-gray-600 mt-1">
           Información basada en protocolos clínicos verificados
         </p>
       </div>
 
-      {/* Messages Area - This will expand to fill available space */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+        {isInitializing ? (
+          <div className="flex items-center gap-2 text-gray-600">
+            <Loader className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Cargando conversación...</span>
+          </div>
+        ) : (
+          messages.map((message) => (
             <div
-              className={`flex items-end space-x-3 ${
-                message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-              } w-full`}
+              key={message.id}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                <Avatar>
-                  {/* If you have images, use AvatarImage src prop */}
-                  {message.type === 'user' ? (
-                    <AvatarFallback>U</AvatarFallback>
-                  ) : (
-                    <AvatarFallback>VM</AvatarFallback>
-                  )}
-                </Avatar>
-              </div>
+              <div
+                className={`flex items-end space-x-3 ${
+                  message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                } w-full`}
+              >
+                <div className="flex-shrink-0">
+                  <Avatar>
+                    {message.type === 'user' ? (
+                      <AvatarFallback>U</AvatarFallback>
+                    ) : (
+                      <AvatarFallback>VM</AvatarFallback>
+                    )}
+                  </Avatar>
+                </div>
 
-              {/* Bubble */}
-              <div className="max-w-[80%] sm:max-w-[70%] lg:max-w-[60%]">
-                <div
-                  className={`px-4 py-3 rounded-lg break-words ${
-                    message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  {message.type === 'user' ? (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                  ) : (
-                    <div className="text-sm leading-relaxed">
-                      <MarkdownContent content={message.content} />
+                <div className="max-w-[80%] sm:max-w-[70%] lg:max-w-[60%]">
+                  <div
+                    className={`px-4 py-3 rounded-lg break-words ${
+                      message.type === 'user'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    {message.type === 'user' ? (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <div className="text-sm leading-relaxed">
+                        <MarkdownContent content={message.content} />
+                      </div>
+                    )}
+                  </div>
+
+                  {message.sources && message.sources.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      {message.sources.map((source, idx) => (
+                        <div key={idx} className="opacity-80">
+                          <span>📄 {source.fileName}</span>
+                          {source.pageLabel && <span> - Página(s): {source.pageLabel}</span>}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-
-                {/* Sources */}
-                {message.sources && message.sources.length > 0 && (
-                  <div className="mt-2 text-xs text-gray-500">
-                    {message.sources.map((source, idx) => (
-                      <div key={idx} className="opacity-80">
-                        <span>📄 {source.file_name}</span>
-                        {source.page_label && <span> - Página(s): {source.page_label}</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
 
-        {/* Loading indicator */}
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-lg flex items-center space-x-2">
@@ -169,7 +211,6 @@ export function ChatBot() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Fixed at bottom */}
       <div className="border-t border-gray-200 p-4 bg-gray-50 flex-shrink-0">
         <div className="flex space-x-2">
           <Input
@@ -178,12 +219,12 @@ export function ChatBot() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isLoading}
+            disabled={isLoading || isInitializing}
             className="flex-1"
           />
           <Button
             onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || isInitializing || !input.trim()}
             className="bg-blue-500 hover:bg-blue-600 text-white"
           >
             <Send className="w-4 h-4" />

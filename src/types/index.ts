@@ -510,6 +510,33 @@ export interface VideoChatMessage {
   messageType: MessageType;
 }
 
+export interface ChatSource {
+  fileName: string;
+  pageLabel: string;
+  score?: number | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'User' | 'Assistant' | 'System';
+  content: string;
+  sources?: ChatSource[] | null;
+  createdAt: string;
+}
+
+export interface ChatConversationResponse {
+  id: string;
+  patientId: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+}
+
+export interface SendChatMessageResponse {
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
+}
+
 export interface IceServer {
   urls: string[];
   username?: string;
