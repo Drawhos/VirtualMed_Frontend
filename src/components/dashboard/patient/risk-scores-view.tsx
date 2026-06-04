@@ -10,7 +10,6 @@ import { riskScoreService } from '@/lib/api/risk-score.service';
 import { useAuthStore } from '@/store/auth.store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,10 +39,16 @@ const INITIAL_FORM: RiskFormState = {
   glucoseMgDl: undefined,
 };
 
-const riskBadgeStyles: Record<string, string> = {
-  Low: 'bg-emerald-100 text-emerald-800',
-  Medium: 'bg-amber-100 text-amber-800',
-  High: 'bg-red-100 text-red-800',
+const riskToneStyles: Record<string, string> = {
+  Low: 'bg-emerald-500',
+  Medium: 'bg-amber-500',
+  High: 'bg-rose-500',
+};
+
+const riskLevelLabel: Record<string, string> = {
+  Low: 'Bajo',
+  Medium: 'Medio',
+  High: 'Alto',
 };
 
 function parseApiError(error: unknown): string {
@@ -122,23 +127,19 @@ export function RiskScoresView() {
       <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-[0_20px_70px_rgba(2,6,23,0.08)]">
         <CardContent className="grid gap-8 p-0 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="p-8">
-            <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Predictor IA</Badge>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">Riesgo cardiovascular</h1>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-blue-600">Riesgo cardiovascular</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Calcula tu riesgo con el modelo clínico del sistema y revisa tu historial de resultados para seguimiento.
             </p>
           </div>
-          <div className="border-t border-slate-200 bg-slate-50 p-8 lg:border-l lg:border-t-0">
-            <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="border-t p-8 lg:border-l lg:border-t-0">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Resumen</p>
+                <h1 className="text-lg font-semibold text-slate-900 mb-4">Resumen</h1>
               </div>
               <div className="space-y-2 text-sm text-slate-700">
                 <p>Evaluaciones registradas: {totalCount}</p>
                 <p>Ultimo nivel: {scoresQuery.data?.items?.[0]?.riskLevel ?? 'Sin datos'}</p>
               </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -147,7 +148,6 @@ export function RiskScoresView() {
         <Card className="border-slate-200 bg-white/95 shadow-[0_20px_70px_rgba(2,6,23,0.08)]">
           <CardHeader className="border-b border-slate-100">
             <CardTitle className="flex items-center gap-2 text-2xl text-slate-950">
-              <Calculator className="h-6 w-6 text-blue-600" />
               Nuevo calculo
             </CardTitle>
             <CardDescription>
@@ -341,20 +341,34 @@ export function RiskScoresView() {
               </div>
             )}
 
-            {(scoresQuery.data?.items ?? []).map((score) => (
-              <div key={score.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{(score.score * 100).toFixed(1)}%</p>
-                    <p className="mt-1 text-xs text-slate-500">{new Date(score.calculatedAt).toLocaleString()}</p>
-                    <p className="mt-1 text-xs text-slate-500">Modelo: {score.modelVersion}</p>
+            <div className="overflow-hidden border-slate-200 bg-white">
+              {(scoresQuery.data?.items ?? []).map((score, index) => (
+                <div
+                  key={score.id}
+                  className={`grid gap-3 px-4 py-4 transition-colors hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] ${
+                    index > 0 ? 'border-t border-slate-100' : ''
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
+                      <span className="text-sm font-medium text-slate-950">{(score.score * 100).toFixed(1)}%</span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500 ml-4">{new Date(score.calculatedAt).toLocaleString()}</p>
+                    <p className="mt-1 text-xs text-slate-500 ml-4">Modelo {score.modelVersion}</p>
                   </div>
-                  <Badge className={`border-0 ${riskBadgeStyles[score.riskLevel] ?? 'bg-blue-100 text-blue-800'}`}>
-                    {score.riskLevel}
-                  </Badge>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:justify-end sm:text-right">
+                    <div className="flex items-center gap-1.5">
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold">Riesgo:</span>
+                      <span>{score.riskLevel == 'low' ? 'Bajo' : score.riskLevel == 'medium' ? 'Medio' : 'Alto'}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button

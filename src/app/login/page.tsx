@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { LoginForm } from "@/components/login/loginForm";
 import { useToast } from "@/hooks/use-toast";
+import { getDashboardPathByRole } from "@/lib/auth-utils";
 
 function SessionExpiredHandler() {
   const searchParams = useSearchParams();
@@ -36,13 +37,13 @@ function SessionExpiredHandler() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push("/");
+      router.replace(getDashboardPathByRole(user?.role));
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, user?.role]);
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">

@@ -296,22 +296,19 @@ export function VitalMetricsEntryView() {
       <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-[0_20px_70px_rgba(2,6,23,0.08)]">
         <CardContent className="grid gap-8 p-0 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="p-8">
-            <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Métricas vitales</Badge>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">Registro de métricas del paciente</h1>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-blue-600">Registro de métricas vitales</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Registra manualmente una o varias lecturas, o carga un JSON cargado con lecturas simuladas.
             </p>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 p-8 lg:border-l lg:border-t-0">
-            <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reglas de registro de métricas</p>
+          <div className="border-t border-slate-200 p-8 lg:border-l lg:border-t-0">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Reglas de registro de métricas</h2>
               <div className="space-y-2 text-sm text-slate-700">
                 <p>Manual: máximo {MAX_MANUAL_ROWS} lecturas por solicitud.</p>
                 <p>Simulado (JSON): máximo {MAX_SIMULATED_ROWS} lecturas por solicitud.</p>
                 <p>Presión arterial: enviar sistólica y diastólica como lecturas separadas.</p>
               </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -319,11 +316,10 @@ export function VitalMetricsEntryView() {
       <Tabs defaultValue="manual" className="space-y-5">
         <TabsList className="h-12 rounded-2xl bg-slate-100 p-1">
           <TabsTrigger value="manual" className="h-10 rounded-xl px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Activity className="mr-2 h-4 w-4 text-blue-600" />
             Ingreso manual
           </TabsTrigger>
           <TabsTrigger value="simulated" className="h-10 rounded-xl px-5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <FileJson2 className="mr-2 h-4 w-4 text-blue-600" />
+            <FileJson2 className="mr-2 h-4 w-4 " />
             Carga JSON simulado
           </TabsTrigger>
         </TabsList>
@@ -338,7 +334,7 @@ export function VitalMetricsEntryView() {
                     Agrega una o más lecturas y envíalas en un solo request.
                   </CardDescription>
                 </div>
-                <Badge className="border-0 bg-cyan-100 text-cyan-800">{manualCount}/{MAX_MANUAL_ROWS}</Badge>
+                <div className="border-0 ">{manualCount}/{MAX_MANUAL_ROWS}</div>
               </div>
             </CardHeader>
 
