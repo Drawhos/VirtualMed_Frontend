@@ -5,7 +5,6 @@ import { isAxiosError } from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, HeartPulse, Loader2, Save, ShieldAlert, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -60,6 +59,12 @@ const RANGE_BY_TYPE: Record<VitalSignType, { min: number; max: number }> = {
   Weight: { min: 1, max: 500 },
   Glucose: { min: 20, max: 600 },
   SpO2: { min: 50, max: 100 },
+};
+
+const ALERT_LEVEL_LABEL: Record<AlertLevel, string> = {
+  Low: 'Bajo',
+  Medium: 'Medio',
+  High: 'Alto',
 };
 
 function getApiErrorMessage(error: unknown, fallback: string) {
@@ -243,24 +248,20 @@ export function VitalThresholdsView() {
       <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-[0_20px_70px_rgba(2,6,23,0.08)]">
         <CardContent className="grid gap-8 p-0 lg:grid-cols-[1.25fr_0.75fr]">
           <div className="p-8">
-            <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">Umbrales de alerta</Badge>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">Configuración de umbrales mínimos y máximos</h1>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-blue-600">Configuración de umbrales mínimos y máximos</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
               Define los límites que disparan alertas para cada métrica vital. Cada persona es diferente, por lo que conviene que consultes con tu doctor de confianza los umbrales adecuados para ti.
             </p>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 p-8 lg:border-l lg:border-t-0">
-            <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="border-t border-slate-200 p-8 lg:border-l lg:border-t-0">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-blue-600" />
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Resumen</p>
+                <h1 className="text-lg font-semibold text-slate-900 mb-4" >Resumen</h1>
               </div>
               <div className="space-y-2 text-sm text-slate-700">
                 <p>Umbrales configurados: {thresholdCount}</p>
                 <p>Rango válido para {TYPE_LABEL[selectedType]}: {selectedRange.min} - {selectedRange.max} {DEFAULT_UNIT_BY_TYPE[selectedType]}</p>
               </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -354,7 +355,7 @@ export function VitalThresholdsView() {
                 variant="outline"
                 onClick={handleDelete}
                 disabled={!currentStoredThreshold || isSubmitting}
-                className="rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                className="rounded-full hover:bg-slate-50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Eliminar umbral
@@ -390,25 +391,36 @@ export function VitalThresholdsView() {
               </div>
             )}
 
-            {(thresholdsQuery.data ?? []).map((threshold) => (
-              <div key={threshold.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{TYPE_LABEL[threshold.vitalSignType]}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+            <div className="overflow-hidden border-slate-200 bg-white">
+              {(thresholdsQuery.data ?? []).map((threshold, index) => (
+                <div
+                  key={threshold.id}
+                  className={`grid gap-3 px-4 py-4 transition-colors hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] ${
+                    index > 0 ? 'border-t border-slate-100' : ''
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
+                      <p className="truncate text-sm font-medium text-slate-950">{TYPE_LABEL[threshold.vitalSignType]}</p>
+                    </div>
+                    <p className="mt-1 pl-5 text-sm text-slate-500">
                       {threshold.minValue} - {threshold.maxValue} {DEFAULT_UNIT_BY_TYPE[threshold.vitalSignType]}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge className="border-0 bg-blue-100 text-blue-800">{threshold.alertLevel}</Badge>
-                    <Badge className={`border-0 ${threshold.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>
-                      {threshold.isActive ? 'Activo' : 'Inactivo'}
-                    </Badge>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:justify-end sm:text-right">
+                    <div className="flex items-center gap-1.5">
+                        <span>Nivel {ALERT_LEVEL_LABEL[threshold.alertLevel]}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-1.5 w-1.5 rounded-full ${threshold.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      <span>{threshold.isActive ? 'Activo' : 'Inactivo'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
           </CardContent>
         </Card>

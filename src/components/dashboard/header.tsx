@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { vitalSignService } from '@/lib/api/vital-sign.service';
+import { UserRole } from '@/constants/userRole';
 import { AlertLevel, AlertSeverity, HealthAlert } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -63,6 +64,7 @@ export function Header() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const canReadAlerts = user?.role === UserRole.PATIENT && (user?.permission?.includes('Alert:Read') ?? false);
 
   const handleLogout = async () => {
     logout();
@@ -72,7 +74,7 @@ export function Header() {
   const alertsQuery = useQuery({
     queryKey: ['health-alerts', 'me'],
     queryFn: () => vitalSignService.getMyAlerts({ page: 1, pageSize: 20 }),
-    enabled: user?.permission?.includes('Alert:Read') ?? false,
+    enabled: canReadAlerts,
     refetchInterval: 30000,
   });
 
@@ -102,7 +104,6 @@ export function Header() {
 
   const alerts = alertsQuery.data?.items ?? [];
   const unreadCount = useMemo(() => alerts.filter((alert) => !alert.isRead).length, [alerts]);
-  const canReadAlerts = user?.permission?.includes('Alert:Read') ?? false;
 
   if (!user) return null;
 

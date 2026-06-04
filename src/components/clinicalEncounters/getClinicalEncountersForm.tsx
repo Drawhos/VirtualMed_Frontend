@@ -358,10 +358,8 @@ export function ListEncountersForm() {
 		<div className="w-full space-y-6 p-6 pt-16 bg-white">
 			<div className="space-y-2">
 				<div className="flex items-center gap-3">
-					<div className="rounded-lg bg-blue-100 p-2">
-						<Stethoscope className="h-5 w-5 text-blue-700" />
-					</div>
-					<h1 className="text-2xl font-bold text-slate-900">{resultsTitle}</h1>
+
+					<h1 className="text-2xl font-bold text-blue-600">{resultsTitle}</h1>
 				</div>
 				<p className="text-sm text-slate-600">
 					Filtra por fechas y tipo de encuentro para consultar la informacion clinica.
@@ -370,15 +368,10 @@ export function ListEncountersForm() {
 
 			<Card className="border-blue-100 shadow-sm">
 				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-blue-700">
+					<CardTitle className="text-lg flex items-center gap-2">
 						<Search className="h-5 w-5" />
-						Filtros de busqueda
+						Filtros de búsqueda
 					</CardTitle>
-					<CardDescription>
-						{isDoctor
-							? "Como doctor puedes filtrar por paciente, fecha y tipo de encuentro."
-							: "Como paciente puedes filtrar tu historial por fecha y tipo de encuentro."}
-					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{isDoctor && (

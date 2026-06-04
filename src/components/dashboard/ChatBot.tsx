@@ -94,8 +94,8 @@ export function ChatBot() {
   return (
     <div className="flex flex-col h-full bg-white rounded-lg border border-gray-200 shadow-sm mt-14">
       {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 flex-shrink-0">
-        <h2 className="text-xl font-semibold text-gray-900">Asistente VirtualMed</h2>
+      <div className="border-b border-gray-200 px-6 py-4  flex-shrink-0">
+        <h1 className="text-xl font-semibold text-blue-600">Asistente VirtualMed</h1>
         <p className="text-sm text-gray-600 mt-1">
           Información basada en protocolos clínicos verificados
         </p>

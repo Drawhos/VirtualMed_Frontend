@@ -198,7 +198,7 @@ export default function ListAppointmentsComponent() {
     <div className="w-full space-y-6 p-6 pt-16">
       {/* Título */}
       <div>
-        <h1 className="text-2xl font-bold">Mis Citas</h1>
+        <h1 className="text-2xl font-bold text-blue-600">Mis Citas</h1>
         <p className="text-muted-foreground mt-2">
           Filtra y visualiza tus citas por rango de fechas y estado
         </p>
@@ -270,7 +270,7 @@ export default function ListAppointmentsComponent() {
               <Button
                 onClick={handleSearchAppointments}
                 disabled={isLoading}
-                className="flex-1"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? "Buscando..." : "Buscar"}

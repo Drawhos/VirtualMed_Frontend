@@ -631,32 +631,32 @@ function MetricCard({
       : `${typeof latest.value === 'number' ? formatNumber(latest.value, latest.value % 1 === 0 ? 0 : 1) : '-'} ${latest.unit}`;
 
   return (
-    <Card className="group overflow-hidden border-slate-200 bg-white/90 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition-transform duration-200 hover:-translate-y-1">
+    <Card className="group overflow-hidden border-slate-200 bg-white/90 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition-transform duration-200 hover:-translate-y-1 mb-3">
       <CardContent className="p-0">
-        <div className={`h-1.5 w-full bg-gradient-to-r ${meta.gradient}`} />
-        <div className="flex h-full flex-col gap-4 p-5">
+        <div className="h-1 w-full bg-blue-600" />
+        <div className="py-2 px-10  ">
           <div className="flex items-start justify-between gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.gradient} text-white shadow-lg shadow-slate-900/10`}>
-              <Icon className="h-6 w-6" />
+            <div>
+              <p className="text-bold text-slate-900">
+                {meta.label}
+              </p>
+              <p className="text-2xl font-semibold text-slate-950">
+                {headline}
+              </p>
             </div>
-            <SourceBadge source={latest.source} />
+            <Icon className="h-5 w-5 text-slate-900 mt-5" />
           </div>
 
-          <div>
-            <p className="text-sm font-medium text-slate-500">{meta.label}</p>
-            <p className={`mt-1 text-2xl font-semibold tracking-tight text-slate-900 ${metric === 'BloodPressure' ? 'text-[1.5rem]' : ''}`}>{headline}</p>
-            <p className="mt-1 text-sm text-slate-500">{meta.description}</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl bg-slate-50 px-3 py-2">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Promedio 7d</p>
-              <p className="mt-1 font-semibold text-slate-900">{averageText}</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 px-3 py-2">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Última lectura</p>
-              <p className="mt-1 font-semibold text-slate-900">{formatDateTime(latest.readingAt)}</p>
-            </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+            <span>
+              Promedio {averageText}
+            </span>
+            <span className="text-slate-300">
+              •
+            </span>
+            <span>
+              {formatDateTime(latest.readingAt)}
+            </span>
           </div>
         </div>
       </CardContent>
@@ -838,154 +838,162 @@ export function VitalMetricsDashboardView() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-6rem)] overflow-hidden rounded-[32px] bg-slate-50 p-6 pt-16">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-r from-cyan-100 via-sky-50 to-emerald-100 opacity-80 blur-3xl" />
+    <div className="relative min-h-[calc(100vh-6rem)] overflow-hidden rounded-[32px] pt-14">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-80 blur-3xl" />
 
-      <div className="relative space-y-6">
+      <div className="relative space-y-2">
         <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <CardContent className="grid gap-8 p-0 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="relative p-8">
-              <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-br from-cyan-50 via-white to-emerald-50" />
-              <div className="relative">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge className="border-0 bg-blue-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-                    Dashboard del paciente
-                  </Badge>
-                  <Badge className="border-0 bg-cyan-100 px-3 py-1 text-cyan-800">{availableMetrics.length} métricas visibles</Badge>
-                </div>
-
-                <h1 className="mt-5 max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 lg:text-5xl">
-                  Hola, {user?.fullName?.split(' ')[0] ?? 'paciente'}. Así se ve tu salud hoy.
+            <div className="relative px-10 py-10">
+              <div className="max-w-4xl">
+                <h1 className="mt-3 text-5xl font-semibold tracking-tight text-blue-600">
+                  Buenos días, {user?.fullName?.split(' ')[0] ?? 'paciente'}
                 </h1>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                  Revisa tus métricas vitales, compara la lectura más reciente con el promedio de 7 días y detecta rápidamente cambios en el origen de los datos.
+                <p className="mt-4 max-w-2xl  leading-8">
+                  Aquí tienes un resumen de tu estado actual y la evolución de tus métricas más importantes.
                 </p>
-
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
-                    <Clock3 className="h-4 w-4 text-slate-500" />
-                    Última actualización {formatDateTime(latestTimestamp)}
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
-                    <Sparkles className="h-4 w-4 text-emerald-500" />
-                    {sourceCounts.Manual} manuales · {sourceCounts.Simulated} simuladas
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
-                    <Activity className="h-4 w-4 text-cyan-500" />
-                    {totalReadings} lecturas en el período
-                  </div>
-                </div>
-
-                <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Métrica activa</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{latestMetricLabel}</p>
-                  </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Promedio 7 días</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">
-                      {selectedMetric === 'BloodPressure'
-                        ? typeof selectedAverage === 'object' && selectedAverage
-                          ? `${typeof selectedAverage.systolic === 'number' ? formatNumber(selectedAverage.systolic) : '-'} / ${typeof selectedAverage.diastolic === 'number' ? formatNumber(selectedAverage.diastolic) : '-'} mmHg`
-                          : '-'
-                        : typeof selectedAverage === 'number'
-                          ? `${formatNumber(selectedAverage, 1)} ${VITAL_META[selectedMetric].unitLabel}`
-                          : '-'}
+                <div className="mt-8 flex flex-wrap gap-8 text-sm">
+                  <div>
+                    <p className="text-slate-500">
+                      Última actualización
+                    </p>
+                    <p className="mt-1">
+                      {formatDateTime(latestTimestamp)}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Lecturas manuales</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{sourceCounts.Manual}</p>
+                  <div>
+                    <p className="text-slate-500">
+                      Lecturas registradas
+                    </p>
+                    <p className="mt-1">
+                      {totalReadings}
+                    </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Simuladas</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">{sourceCounts.Simulated}</p>
+                  <div>
+                    <p className="text-slate-500">
+                      Fuentes de datos
+                    </p>
+                    <p className="mt-1">
+                      {sourceCounts.Manual} manuales · {sourceCounts.Simulated} simuladas
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-slate-200 bg-slate-50 p-8 lg:border-l lg:border-t-0">
-              <div className="flex items-center justify-between gap-3">
+            {/* right side */}
+            <div className="border-t border-slate-200 bg-white px-10 py-6 lg:border-l lg:border-t-0">
+              <div className="flex items-start justify-between gap-6">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.22em] text-slate-500">Estado actual</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900">{getInsightLabel(selectedMetric)}</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                    {getInsightLabel(selectedMetric)}
+                  </h2>
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={handleRefresh}
-                  className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-100"
+                  className="h-10 text-white px-3 bg-blue-600 hover:bg-blue-700 hover:text-white"
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
                   Actualizar
                 </Button>
               </div>
-
-              <div className={`mt-6 rounded-[28px] border p-5 shadow-sm ${thresholdStyles.container}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <p className={`text-sm font-medium uppercase tracking-[0.18em] ${thresholdStyles.title}`}>Mensaje de salud</p>
-                  <Badge className={`border-0 px-2.5 py-1 text-[11px] ${thresholdStyles.badge}`}>{thresholdStyles.badgeText}</Badge>
-                </div>
-                <p className={`mt-3 text-base leading-7 ${thresholdStyles.body}`}>
+              <div className="mt-5 flex items-start gap-3">
+                <span
+                  className={`mt-2 h-2 w-2 shrink-0 rounded-full ${thresholdSignal.outOfRange
+                    ? thresholdSignal.level === 'High'
+                      ? 'bg-red-500'
+                      : thresholdSignal.level === 'Medium'
+                        ? 'bg-amber-500'
+                        : 'bg-blue-500'
+                    : 'bg-emerald-500'
+                    }`}
+                />
+                <p className=" text-slate-900">
                   {thresholdSignal.outOfRange ? thresholdSignal.message : trendText}
                 </p>
               </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-[24px] bg-white p-5 shadow-sm">
-                  <p className="text-sm font-medium text-slate-500">Rango actual</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{RANGE_OPTIONS.find((option) => option.key === range)?.label}</p>
-                  <p className="mt-2 text-sm text-slate-500">Datos desde {formatDateTime(rangeParams.fromUtc)} hasta {formatDateTime(rangeParams.toUtc)}</p>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="mt-2  text-slate-900">
+                    {RANGE_OPTIONS.find(
+                      (option) => option.key === range
+                    )?.label}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Desde {formatDateTime(rangeParams.fromUtc)} -  Hasta {formatDateTime(rangeParams.toUtc)}
+                  </p>
                 </div>
-
-                <div className="rounded-[24px] bg-white p-5 shadow-sm">
-                  <p className="text-sm font-medium text-slate-500">Cobertura</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{availableMetrics.length} métricas</p>
-                  <p className="mt-2 text-sm text-slate-500">{totalReadings} lecturas disponibles para graficar y comparar.</p>
+                <div>
+                  <p className="mt-2  text-slate-900">
+                    {availableMetrics.length} métricas disponibles
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {totalReadings} lecturas registradas
+                  </p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
+        <div className="grid gap-2 xl:grid-cols-[1.48fr_0.95fr]">
           <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <CardHeader className="border-b border-slate-100 pb-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <CardTitle className="text-2xl text-slate-950">Tendencia de {VITAL_META[selectedMetric].label.toLowerCase()}</CardTitle>
-                  <CardDescription className="mt-1 text-slate-600">
-                    Visualiza la evolución más reciente y compárala con el promedio semanal.
-                  </CardDescription>
+            <CardHeader className="border-b border-slate-200 px-8 py-3">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <CardTitle className="text-2xl font-semibold text-slate-950">
+                      Tendencia de {VITAL_META[selectedMetric].label.toLowerCase()}
+                    </CardTitle>
+                    
+                  </div>
+
+                  <div className="flex items-center gap-5 text-sm">
+                    {RANGE_OPTIONS.map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => setRange(option.key)}
+                        className={[
+                          'transition-colors',
+                          range === option.key
+                            ? 'text-slate-950 font-medium'
+                            : 'text-slate-500 hover:text-slate-700'
+                        ].join(' ')}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {RANGE_OPTIONS.map((option) => (
-                    <RangeChip
-                      key={option.key}
-                      range={option.key}
-                      active={range === option.key}
-                      onClick={() => setRange(option.key)}
-                    />
-                  ))}
-                </div>
-              </div>
+                <div className="overflow-x-auto">
+                  <div className="flex min-w-max gap-8 border-b border-slate-200">
+                    {metricCards.map((metric) => (
+                      <button
+                        key={metric}
+                        onClick={() => setSelectedMetric(metric)}
+                        disabled={!chartData.length}
+                        className={[
+                          'relative pb-4 text-sm font-medium transition-colors',
+                          selectedMetric === metric
+                            ? 'text-slate-950'
+                            : 'text-slate-500 hover:text-slate-700'
+                        ].join(' ')}
+                      >
+                        {VITAL_META[metric].label}
 
-              <div className="flex flex-wrap gap-2 pt-2">
-                {metricCards.map((metric) => (
-                  <MetricChip
-                    key={metric}
-                    metric={metric}
-                    active={selectedMetric === metric}
-                    onClick={() => setSelectedMetric(metric)}
-                    disabled={!chartData.length}
-                  />
-                ))}
+                        {selectedMetric === metric && (
+                          <span className="absolute bottom-0 left-0 h-[2px] w-full bg-slate-950" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-6">
+            <CardContent className="py-0">
               {chartData.length ? (
                 <div className="h-[26rem] rounded-[24px] bg-gradient-to-b from-slate-50 to-white p-4">
                   <ResponsiveContainer width="100%" height="100%">
@@ -993,8 +1001,8 @@ export function VitalMetricsDashboardView() {
                       <LineChart data={chartData} margin={{ top: 10, right: 12, bottom: 0, left: -12 }}>
                         <defs>
                           <linearGradient id="bpSystolic" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.45} />
-                            <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.02} />
+                            <stop offset="5%" stopColor="#2563EB" stopOpacity={0.45} />
+                            <stop offset="95%" stopColor="#2563EB" stopOpacity={0.02} />
                           </linearGradient>
                           <linearGradient id="bpDiastolic" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.45} />
@@ -1005,25 +1013,25 @@ export function VitalMetricsDashboardView() {
                         <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                         <YAxis tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={40} />
                         <Tooltip content={<ChartTooltip />} />
-                        <ReferenceLine y={(selectedAverage as { systolic?: number } | null)?.systolic} stroke="#0ea5e9" strokeDasharray="3 3" ifOverflow="extendDomain" />
+                        <ReferenceLine y={(selectedAverage as { systolic?: number } | null)?.systolic} stroke="#2563EB" strokeDasharray="3 3" ifOverflow="extendDomain" />
                         <ReferenceLine y={(selectedAverage as { diastolic?: number } | null)?.diastolic} stroke="#14b8a6" strokeDasharray="3 3" ifOverflow="extendDomain" />
-                        <Line type="monotone" dataKey="systolic" stroke="#0284c7" strokeWidth={3} dot={{ r: 3, fill: '#0284c7' }} activeDot={{ r: 6 }} name="Sistólica" />
-                        <Line type="monotone" dataKey="diastolic" stroke="#0f766e" strokeWidth={3} dot={{ r: 3, fill: '#0f766e' }} activeDot={{ r: 6 }} name="Diastólica" />
+                        <Line type="monotone" dataKey="systolic" stroke="#2563EB" strokeWidth={3} dot={{ r: 3, fill: '#2563EB' }} activeDot={{ r: 6 }} name="Sistólica" />
+                        <Line type="monotone" dataKey="diastolic" stroke="#14b8a6" strokeWidth={3} dot={{ r: 3, fill: '#14b8a6' }} activeDot={{ r: 6 }} name="Diastólica" />
                       </LineChart>
                     ) : (
                       <AreaChart data={chartData} margin={{ top: 10, right: 12, bottom: 0, left: -12 }}>
                         <defs>
                           <linearGradient id="vitalGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.02} />
+                            <stop offset="5%" stopColor="#2563EB" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#2563EB" stopOpacity={0.02} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" vertical={false} />
                         <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                         <YAxis tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={40} tickFormatter={(value) => formatCompactNumber(Number(value))} />
                         <Tooltip content={<ChartTooltip />} />
-                        <ReferenceLine y={typeof selectedAverage === 'number' ? selectedAverage : undefined} stroke="#0ea5e9" strokeDasharray="3 3" ifOverflow="extendDomain" />
-                        <Area type="monotone" dataKey="value" stroke="#0284c7" strokeWidth={3} fill="url(#vitalGradient)" name={VITAL_META[selectedMetric].label} />
+                        <ReferenceLine y={typeof selectedAverage === 'number' ? selectedAverage : undefined} stroke="#2563EB" strokeDasharray="3 3" ifOverflow="extendDomain" />
+                        <Area type="monotone" dataKey="value" stroke="#2563EB" strokeWidth={3} fill="url(#vitalGradient)" name={VITAL_META[selectedMetric].label} />
                       </AreaChart>
                     )}
                   </ResponsiveContainer>
@@ -1039,7 +1047,7 @@ export function VitalMetricsDashboardView() {
             </CardContent>
           </Card>
 
-          <Card className="h-[34.2rem] overflow-hidden border-slate-200 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+          {/* <Card className="h-[34.2rem] overflow-hidden border-slate-200 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
             <CardHeader className="border-b border-slate-100 pb-5">
               <CardTitle className="text-2xl text-slate-950">Lecturas recientes</CardTitle>
               <CardDescription className="mt-1 text-slate-600">
@@ -1060,16 +1068,22 @@ export function VitalMetricsDashboardView() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
+
+
+
+
+          <div className="">
+            {availableMetrics
+              .filter((metric) => metric !== 'BloodPressure' || items.some((item) => item.vitalSignType === 'BloodPressureSystolic' || item.vitalSignType === 'BloodPressureDiastolic'))
+              .map((metric) => (
+                <MetricCard key={metric} metric={metric} response={response} />
+              ))}
+          </div>
+
+
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {availableMetrics
-            .filter((metric) => metric !== 'BloodPressure' || items.some((item) => item.vitalSignType === 'BloodPressureSystolic' || item.vitalSignType === 'BloodPressureDiastolic'))
-            .map((metric) => (
-              <MetricCard key={metric} metric={metric} response={response} />
-            ))}
-        </div>
       </div>
     </div>
   );
