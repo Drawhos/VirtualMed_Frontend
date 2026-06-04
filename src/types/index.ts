@@ -64,6 +64,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
 export interface PatientRegisterRequest {
   fullName: string;
   email: string;

@@ -249,7 +249,7 @@ export const LoginForm = () => {
               )}
             />
             <Link
-              href="#"
+              href="/forgot-password"
               className="text-sm text-primary hover:underline"
             >
               ¿Olvidaste tu contraseña?

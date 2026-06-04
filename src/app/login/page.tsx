@@ -21,6 +21,14 @@ function SessionExpiredHandler() {
       });
       router.replace("/login");
     }
+
+    if (reason === "password-reset") {
+      toast({
+        title: "Contraseña actualizada",
+        description: "Ya puedes iniciar sesión con tu nueva contraseña.",
+      });
+      router.replace("/login");
+    }
   }, [searchParams, toast, router]);
 
   return null;
