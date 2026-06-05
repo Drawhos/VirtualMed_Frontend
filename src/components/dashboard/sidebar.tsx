@@ -122,6 +122,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   },
   { id: 'admin-clinical-encounters', label: 'Actualizar Encuentros Clínicos', 
     href: '/dashboard/admin/clinical-encounters/update', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Update']},
+  { id: 'admin-rag-documents', label: 'Base RAG', href: '/dashboard/admin/rag-documents', icon: FileText, requiredPermissions: ['RagDocument:Read'] },
 ];
 
 const SETTINGS_NAV_ITEM: NavLinkItem = {

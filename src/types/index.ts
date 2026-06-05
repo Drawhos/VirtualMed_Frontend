@@ -537,6 +537,24 @@ export interface SendChatMessageResponse {
   assistantMessage: ChatMessage;
 }
 
+export type RagDocumentStatus = 'Pending' | 'Ingesting' | 'Indexed' | 'Failed';
+
+export interface RagDocument {
+  id: string;
+  fileName: string;
+  status: RagDocumentStatus;
+  fileSizeBytes: number;
+  indexedNodeCount?: number | null;
+  errorMessage?: string | null;
+  createdAt: string;
+  indexedAt?: string | null;
+}
+
+export interface UploadRagDocumentResponse {
+  document: RagDocument;
+  message: string;
+}
+
 export interface IceServer {
   urls: string[];
   username?: string;
