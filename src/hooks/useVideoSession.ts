@@ -14,6 +14,27 @@ export function useVideoSession(sessionId: string) {
 	const [chatHistory, setChatHistory] = useState<VideoChatMessage[]>([]);
 	const [isLoadingChat, setIsLoadingChat] = useState(false);
 	const [chatError, setChatError] = useState<string | null>(null);
+	const [appointmentId, setAppointmentId] = useState<string | null>(null);
+
+	// Cargar el appointmentId de la sesión de video
+	useEffect(() => {
+		if (!sessionId) return;
+		let cancelled = false;
+
+		const loadSessionDetails = async () => {
+			try {
+				const session = await doctorService.getVideoSession(sessionId);
+				if (!cancelled) {
+					setAppointmentId(session.appointmentId);
+				}
+			} catch {
+				// No bloquear si falla — el appointmentId es solo para el panel del doctor
+			}
+		};
+
+		loadSessionDetails();
+		return () => { cancelled = true; };
+	}, [sessionId]);
 
 	const loadChatHistory = useCallback(async () => {
 		if (!sessionId) return;
@@ -67,6 +88,7 @@ export function useVideoSession(sessionId: string) {
 	);
 
 	return {
+		appointmentId,
 		chatHistory,
 		isLoadingChat,
 		chatError,

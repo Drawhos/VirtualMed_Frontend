@@ -364,7 +364,7 @@ export default function VideoCall() {
 		<div className="space-y-6 p-6 pt-16">
 			<Card className="border-blue-100 shadow-sm">
 				<CardHeader>
-					<CardTitle className="text-xl text-slate-900">
+					<CardTitle className="text-xl text-blue-600 font-bold">
 						Crear sesion de video
 					</CardTitle>
 					<CardDescription>
@@ -394,7 +394,7 @@ export default function VideoCall() {
 
 					<div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
 						<div className="space-y-2">
-							<label className="text-sm font-medium text-slate-900">
+							<label className="text-sm font-medium text-blue-600">
 								Cita (ID)
 							</label>
 							<Select
@@ -458,7 +458,7 @@ export default function VideoCall() {
 
 			<Card className="border-slate-200 shadow-sm">
 				<CardHeader>
-					<CardTitle className="text-xl text-slate-900">
+					<CardTitle className="text-xl text-blue-600 font-bold">
 						Sesion creada
 					</CardTitle>
 					<CardDescription>
@@ -495,7 +495,7 @@ export default function VideoCall() {
 					</div>
 
 					<div className="space-y-2">
-						<label className="text-sm font-medium text-slate-900">
+						<label className="text-sm font-medium text-blue-600">
 							Sesiones disponibles
 						</label>
 						<Select
@@ -605,7 +605,7 @@ export default function VideoCall() {
 					<Button
 						onClick={handleStartSession}
 						disabled={!session || isStartingSession}
-						className="bg-slate-900 hover:bg-slate-950"
+						className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
 					>
 						{isStartingSession ? (
 							<Loader2 className="h-4 w-4 animate-spin" />

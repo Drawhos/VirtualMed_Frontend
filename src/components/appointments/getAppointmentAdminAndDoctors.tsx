@@ -384,7 +384,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
     <div className="w-full space-y-6 p-6 pt-16">
       {/* Título */}
       <div>
-        <h1 className="text-2xl font-bold">Mis Citas</h1>
+        <h1 className="text-2xl font-bold text-blue-600">Mis Citas</h1>
         <p className="text-muted-foreground mt-2">
           Filtra y visualiza tus citas por rango de fechas y estado
         </p>
@@ -393,8 +393,8 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
       {/* Card de filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Search className="h-5 w-5" />
+          <CardTitle className="text-lg flex items-center gap-2 text-blue-600">
+            <Search className="h-5 w-5 text-blue-600" />
             Filtros de búsqueda
           </CardTitle>
           <CardDescription>Busca un nombre, dale al buscador, y encuentra al doctor y paciente en los selectores</CardDescription>
@@ -591,7 +591,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
 
             {/* Botones */}
             <div className="flex gap-2 items-end">
-              <Button onClick={handleSearchAppointments} disabled={isLoading} className="flex-1">
+              <Button onClick={handleSearchAppointments} disabled={isLoading} className="flex-1 bg-blue-600">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? "Buscando..." : "Buscar"}
               </Button>
@@ -607,7 +607,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
       {filteredAppointments.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Citas ({filteredAppointments.length})</CardTitle>
+            <CardTitle className="text-lg text-blue-600">Citas ({filteredAppointments.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -677,7 +677,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Cita</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-600">Editar Cita</DialogTitle>
           </DialogHeader>
 
           {appointmentToEdit && (
@@ -771,7 +771,7 @@ export default function ListAppointmentsComponent({ mode }: ListAppointmentsProp
 
           <DialogFooter>
             <Button variant="outline" onClick={closeEditDialog}>Cancelar</Button>
-            <Button onClick={handleUpdateAppointment} disabled={isUpdating}>
+            <Button onClick={handleUpdateAppointment} disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isUpdating ? "Actualizando..." : "Confirmar"}
             </Button>

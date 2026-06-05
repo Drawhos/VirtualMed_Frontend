@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
-import { Search, RefreshCw, UserRound, FileText, Phone, ShieldCheck, FileJson, FileDown } from 'lucide-react';
+import { Search, RefreshCw, UserRound, FileText, Phone, ShieldCheck, FileJson, FileDown, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -233,7 +233,7 @@ export function DoctorPatientsView() {
     <div className="space-y-6 pt-16">
       <Card className="border-gray-200">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl text-gray-900">Pacientes del Doctor</CardTitle>
+          <CardTitle className="text-2xl text-blue-600">Pacientes del Doctor</CardTitle>
           <CardDescription>
             Consulta y busca los pacientes con los que ya has tenido citas en VirtualMed.
           </CardDescription>
@@ -251,7 +251,7 @@ export function DoctorPatientsView() {
               />
             </div>
 
-            <Button type="submit" disabled={loadingList}>
+            <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white" disabled={loadingList}>
               Buscar
             </Button>
 
@@ -302,9 +302,11 @@ export function DoctorPatientsView() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
                           onClick={() => handleOpenDetail(patient.id)}
                         >
                           Ver detalle
+                          <Eye className="h-2 w-4 " />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -342,7 +344,7 @@ export function DoctorPatientsView() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Detalle del Paciente</DialogTitle>
+            <DialogTitle className='text-2xl font-bold text-blue-600'>Detalle del Paciente</DialogTitle>
             <DialogDescription>
               Información clínica y administrativa del paciente seleccionado.
             </DialogDescription>
@@ -370,6 +372,7 @@ export function DoctorPatientsView() {
                 </Button>
                 <Button
                   type="button"
+                  className='bg-blue-600 text-white hover:bg-blue-700'
                   onClick={handleExportPdf}
                   disabled={exportingFhir || exportingPdf}
                 >
@@ -424,10 +427,12 @@ export function DoctorPatientsView() {
                     Autorizaciones
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant={selectedPatient.acceptPrivacy ? 'default' : 'destructive'}>
+                    <Badge className='bg-blue-600 text-white hover:bg-blue-700'
+                      variant={selectedPatient.acceptPrivacy ? 'default' : 'destructive'}>
                       Privacidad: {selectedPatient.acceptPrivacy ? 'Aceptada' : 'No aceptada'}
                     </Badge>
-                    <Badge variant={selectedPatient.authorizeData ? 'default' : 'destructive'}>
+                    <Badge className='bg-blue-600 text-white hover:bg-blue-700'
+                      variant={selectedPatient.authorizeData ? 'default' : 'destructive'}>
                       Tratamiento de datos: {selectedPatient.authorizeData ? 'Autorizado' : 'No autorizado'}
                     </Badge>
                   </div>

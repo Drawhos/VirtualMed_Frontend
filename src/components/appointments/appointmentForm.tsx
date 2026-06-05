@@ -308,7 +308,7 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
   return (
     <div className="w-full max-w-2xl mx-auto p-6 pt-16">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Crear Nueva Cita</h1>
+        <h1 className="text-2xl font-bold text-blue-600">Crear Nueva Cita</h1>
         <p className="text-muted-foreground mt-2">
           Completa el formulario para agendar una cita con el paciente
         </p>
@@ -340,6 +340,7 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
                   <Button
                     type="button"
                     variant="outline"
+                    className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
                     onClick={() => fetchPatients(patientSearch, 1)}
                     disabled={isLoadingPatients}
                   >
@@ -639,7 +640,7 @@ export default function AppointmentForm({ mode }: AppointmentFormProps) {
             <Button
               type="submit"
               disabled={isLoading || !form.formState.isValid}
-              className="flex-1"
+              className="flex-1 bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Creando cita..." : "Crear Cita"}
