@@ -1,35 +1,24 @@
 // src/lib/api/chatbot.service.ts
-import axios from 'axios';
-
-const CHATBOT_API_URL = process.env.NEXT_PUBLIC_CHATBOT_API_URL || 'http://127.0.0.1:8000';
-
-export interface ChatbotRequest {
-  session_id: string;
-  message: string;
-}
-
-export interface ChatbotSource {
-  file_name: string;
-  page_label: string;
-  score: number;
-}
-
-export interface ChatbotResponse {
-  answer: string;
-  sources: ChatbotSource[];
-}
-
-const chatbotClient = axios.create({
-  baseURL: CHATBOT_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000,
-});
+import apiClient from './axios';
+import {
+  ChatConversationResponse,
+  SendChatMessageResponse,
+} from '@/types';
 
 export const chatbotService = {
-  sendMessage: async (payload: ChatbotRequest): Promise<ChatbotResponse> => {
-    const response = await chatbotClient.post<ChatbotResponse>('/chat', payload);
+  getConversation: async (): Promise<ChatConversationResponse> => {
+    const response = await apiClient.get<ChatConversationResponse>('/patients/me/chat');
+    return response.data;
+  },
+
+  sendMessage: async (message: string): Promise<SendChatMessageResponse> => {
+    const response = await apiClient.post<SendChatMessageResponse>(
+      '/patients/me/chat/messages',
+      { message },
+      { timeout: 90000 }
+    );
     return response.data;
   },
 };
+
+export type { ChatSource } from '@/types';

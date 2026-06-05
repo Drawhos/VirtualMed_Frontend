@@ -18,7 +18,7 @@ export default function Settings() {
   return (
     <div className="space-y-8 p-6 pt-16">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-2">
+        <h1 className="text-3xl font-bold text-blue-600 dark:text-slate-50 mb-2">
           Configuración
         </h1>
         <p className="text-slate-600 dark:text-slate-400">

@@ -11,6 +11,8 @@ import {
   DoctorRegisterRequest,
   Enable2FAResponse,
   Verify2FARequest,
+  ResetPasswordRequest,
+  MessageResponse,
 } from '@/types';
 
 export const authService = {
@@ -53,6 +55,26 @@ export const authService = {
 
   verify2FA: async (data: Verify2FARequest): Promise<void> => {
     await apiClient.post('/auth/2fa/verify', data);
+  },
+
+  verifyEmail: async (token: string): Promise<MessageResponse> => {
+    const response = await apiClient.post<MessageResponse>('/auth/verify-email', { token });
+    return response.data;
+  },
+
+  resendVerification: async (email: string): Promise<MessageResponse> => {
+    const response = await apiClient.post<MessageResponse>('/auth/resend-verification', { email });
+    return response.data;
+  },
+
+  forgotPassword: async (email: string): Promise<MessageResponse> => {
+    const response = await apiClient.post<MessageResponse>('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordRequest): Promise<MessageResponse> => {
+    const response = await apiClient.post<MessageResponse>('/auth/reset-password', data);
+    return response.data;
   },
 };
 

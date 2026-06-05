@@ -15,33 +15,43 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const pathname = request.nextUrl.pathname;
 
-  // Sin token → login
+  const redirectToLogin = () => NextResponse.redirect(new URL('/login', request.url));
+
+  const clearAuthCookies = (response: NextResponse) => {
+    response.cookies.delete('token');
+    response.cookies.delete('refreshToken');
+    return response;
+  };
+
+  const isLoginRoute = pathname.startsWith('/login');
+
+  // Sin token → solo se permite entrar a login
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return isLoginRoute ? NextResponse.next() : redirectToLogin();
   }
 
   let decoded: DecodedToken;
   try {
     decoded = jwtDecode<DecodedToken>(token);
   } catch {
-    // Token malformado → limpiar cookie y redirigir
-    const res = NextResponse.redirect(new URL('/login', request.url));
-    res.cookies.delete('token');
-    res.cookies.delete('refreshToken');
+    // Token malformado → limpiar cookies
+    const res = clearAuthCookies(isLoginRoute ? NextResponse.next() : redirectToLogin());
     return res;
   }
 
   // Token expirado → limpiar y redirigir
   const now = Math.floor(Date.now() / 1000);
   if (decoded.exp && decoded.exp < now) {
-    const res = NextResponse.redirect(new URL('/login', request.url));
-    res.cookies.delete('token');
-    res.cookies.delete('refreshToken');
+    const res = clearAuthCookies(isLoginRoute ? NextResponse.next() : redirectToLogin());
     return res;
   }
 
   const userRole = decoded.role;
   const correctPath = getDashboardPathByRole(userRole);
+
+  if (isLoginRoute) {
+    return NextResponse.redirect(new URL(correctPath, request.url));
+  }
 
   // Si intenta acceder a un dashboard que no le corresponde
   // → redirigir a su dashboard correcto
@@ -67,5 +77,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/login/:path*'],
 };

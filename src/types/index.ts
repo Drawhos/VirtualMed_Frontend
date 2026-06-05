@@ -64,6 +64,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
 export interface PatientRegisterRequest {
   fullName: string;
   email: string;
@@ -499,6 +508,33 @@ export interface VideoChatMessage {
   message: string;
   sentAt: string;
   messageType: MessageType;
+}
+
+export interface ChatSource {
+  fileName: string;
+  pageLabel: string;
+  score?: number | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'User' | 'Assistant' | 'System';
+  content: string;
+  sources?: ChatSource[] | null;
+  createdAt: string;
+}
+
+export interface ChatConversationResponse {
+  id: string;
+  patientId: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+}
+
+export interface SendChatMessageResponse {
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
 }
 
 export interface IceServer {
