@@ -60,6 +60,7 @@ import { VideoSessionStatus } from "@/constants/videoSessionStatus";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
+import { InCallClinicalPanel } from "@/components/video-session/InCallClinicalPanel";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -169,7 +170,7 @@ const ChatPanel = ({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-blue-600">
             Chat en tiempo real
           </p>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
@@ -235,6 +236,7 @@ const ChatPanel = ({
         />
         <Button
           type="submit"
+          className="bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
           disabled={isChatDisabled || isSending || !messageDraft.trim()}
         >
           {isSending ? "Enviando..." : "Enviar"}
@@ -266,14 +268,14 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
   const [isSending, setIsSending] = useState(false);
   const [callEndedInfo, setCallEndedInfo] = useState<{ endReason?: string } | null>(null);
   const [peerResetKey, setPeerResetKey] = useState(0);
-  
+
   const { iceServers, isLoading: isIceLoading, error: iceError, refresh } =
-  useIceCredentials(sessionId);
+    useIceCredentials(sessionId);
   const signalR = useSignalR(sessionId);
-  const { chatHistory, chatError, endSession } = useVideoSession(sessionId);
+  const { appointmentId, chatHistory, chatError, endSession } = useVideoSession(sessionId);
   const { localStream, remoteStream, connectionState, mediaError, closeConnection } =
-  useWebRTC(sessionId, iceServers, role, signalR, peerResetKey);
-  
+    useWebRTC(sessionId, iceServers, role, signalR, peerResetKey);
+
   const localInitials = useMemo(() => {
     const initials = user?.fullName
       ?.split(" ")
@@ -281,32 +283,32 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
       .join("")
       .toUpperCase()
       .slice(0, 2);
-      return initials || "TU";
-    }, [user?.fullName]);
-    
-    const remoteParticipant = useMemo(
-      () =>
-        role === "doctor"
-      ? { name: "Paciente invitado", initials: "PI" }
-      : { name: "Doctor invitado", initials: "DI" },
-      [role]
-    );
-    
-    const sessionStatus = useMemo<VideoSessionStatus>(() => {
-      if (hasEnded) return VideoSessionStatus.ENDED;
-      if (iceError) return VideoSessionStatus.ERROR;
-      if (connectionState === "failed") return VideoSessionStatus.ERROR;
-      if (signalR.status === "reconnecting") return VideoSessionStatus.RECONNECTING;
-      if (connectionState === "connected") return VideoSessionStatus.ACTIVE;
+    return initials || "TU";
+  }, [user?.fullName]);
+
+  const remoteParticipant = useMemo(
+    () =>
+      role === "doctor"
+        ? { name: "Paciente invitado", initials: "PI" }
+        : { name: "Doctor invitado", initials: "DI" },
+    [role]
+  );
+
+  const sessionStatus = useMemo<VideoSessionStatus>(() => {
+    if (hasEnded) return VideoSessionStatus.ENDED;
+    if (iceError) return VideoSessionStatus.ERROR;
+    if (connectionState === "failed") return VideoSessionStatus.ERROR;
+    if (signalR.status === "reconnecting") return VideoSessionStatus.RECONNECTING;
+    if (connectionState === "connected") return VideoSessionStatus.ACTIVE;
     if (connectionState === "disconnected") return VideoSessionStatus.RECONNECTING;
     return VideoSessionStatus.WAITING;
   }, [connectionState, hasEnded, iceError, signalR.status]);
-  
+
   const remoteConnected = Boolean(remoteStream);
   const isRemoteVideoOn =
-  remoteStream
-    ?.getVideoTracks()
-    .some((t) => t.enabled && t.readyState !== "ended") ?? false;
+    remoteStream
+      ?.getVideoTracks()
+      .some((t) => t.enabled && t.readyState !== "ended") ?? false;
   const isChatDisabled =
     sessionStatus === VideoSessionStatus.ERROR ||
     sessionStatus === VideoSessionStatus.ENDED;
@@ -977,7 +979,7 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
       <div className="space-y-4 p-6 pt-16">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-bold text-blue-600">
               Sesion de videollamada
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -1087,6 +1089,10 @@ export function VideoCallRoom({ sessionId, role }: VideoCallRoomProps) {
             </SheetContent>
           </Sheet>
         </div>
+
+        {role === 'doctor' && appointmentId && (
+          <InCallClinicalPanel appointmentId={appointmentId} />
+        )}
       </div>
     </TooltipProvider>
   );

@@ -1,8 +1,15 @@
-export default function DoctorDashboard() {
-  return (
-    <div className="p-6 pt-16">
-      <h1>Dashboard del Médico</h1>
-      <p>Contenido próximamente...</p>
-    </div>
-  );
+'use client';
+
+import { useAuthStore } from '@/store/auth.store';
+import { UserRole } from '@/constants/userRole';
+import { DoctorCalendar } from '@/components/dashboard/doctor/doctor-calendar';
+
+export default function DoctorCalendarPage() {
+  const { user } = useAuthStore();
+
+  if (user && user.role !== UserRole.DOCTOR) {
+    return null;
+  }
+
+  return <DoctorCalendar />;
 }

@@ -5,6 +5,7 @@ import { isAxiosError } from "axios";
 import {
 	ChevronLeft,
 	ChevronRight,
+	Eye,
 	Loader2,
 	Search,
 	Stethoscope,
@@ -399,7 +400,7 @@ export function ListEncountersForm() {
 									variant="outline"
 									onClick={() => loadPatients(patientSearch, 1)}
 									disabled={isLoadingPatients}
-									className="border-blue-200"
+									className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
 								>
 									{isLoadingPatients ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
 								</Button>
@@ -518,7 +519,7 @@ export function ListEncountersForm() {
 			{encounters.length > 0 && (
 				<Card className="border-slate-200">
 					<CardHeader>
-						<CardTitle className="text-slate-900">
+						<CardTitle className="text-blue-600">
 							Resultados ({encounters.length})
 						</CardTitle>
 					</CardHeader>
@@ -559,10 +560,12 @@ export function ListEncountersForm() {
 												<Button
 													type="button"
 													variant="outline"
+													className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
 													size="sm"
 													onClick={() => openEncounterDetails(encounter)}
 												>
 													Ver detalle
+													<Eye className="h-4 w-4" />
 												</Button>
 											</TableCell>
 										</TableRow>
@@ -583,7 +586,7 @@ export function ListEncountersForm() {
 			>
 				<DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle>Detalle completo del historial clinico</DialogTitle>
+						<DialogTitle className="text-blue-600 font-bold">Detalle completo del historial clinico</DialogTitle>
 						<DialogDescription>
 							Revisa toda la informacion registrada para este encuentro.
 						</DialogDescription>
@@ -653,7 +656,7 @@ export function ListEncountersForm() {
 									<div className="space-y-2">
 										{selectedEncounter.diagnoses.map((diagnosis) => (
 											<div key={diagnosis.id} className="rounded-md border border-slate-200 p-2">
-												<p className="text-sm font-semibold text-slate-900">{diagnosis.icd10Code}</p>
+												<p className="text-sm font-semibold text-blue-600">{diagnosis.icd10Code}</p>
 												<p className="text-sm text-slate-700">{diagnosis.description}</p>
 												<p className="text-xs text-slate-500">Tipo: {diagnosis.type}</p>
 											</div>
@@ -670,7 +673,7 @@ export function ListEncountersForm() {
 									<div className="space-y-3">
 										{selectedEncounter.prescriptions.map((prescription) => (
 											<div key={prescription.id} className="rounded-md border border-slate-200 p-3 space-y-2">
-												<p className="text-sm font-semibold text-slate-900">#{prescription.prescriptionNumber}</p>
+												<p className="text-sm font-semibold text-blue-600">#{prescription.prescriptionNumber}</p>
 												<p className="text-xs text-slate-600">
 													Emitida: {formatDateTime(prescription.issuedAt)} | Vigencia: {formatDateTime(prescription.validUntil)}
 												</p>
@@ -693,6 +696,7 @@ export function ListEncountersForm() {
 						<Button
 							type="button"
 							variant="outline"
+							className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white"
 							onClick={() => {
 								setIsDetailDialogOpen(false);
 								setSelectedEncounter(null);

@@ -49,12 +49,11 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
     label: 'Encuentros Clínicos',
     icon: Stethoscope,
     children: [
-      { label: 'Nuevo encuentro', href: '/dashboard/doctor/encounters/new', requiredPermissions: ['ClinicalEncounter:Create'] },
       { label: 'Ver encuentros', href: '/dashboard/doctor/encounters/list', requiredPermissions: ['ClinicalEncounter:Read'] },
     ],
   },
   {
-    id: 'doctor-video-sessions', label: 'Sesiones Médicas', href: '/dashboard/doctor/video-sessions', icon: Video, requiredPermissions: ['VideoSession:Create'] 
+    id: 'doctor-video-sessions', label: 'Sesiones Médicas', href: '/dashboard/doctor/video-sessions', icon: Video, requiredPermissions: ['VideoSession:Create']
   }
 ];
 
@@ -70,7 +69,7 @@ const PATIENT_NAV_ITEMS: NavItem[] = [
     label: 'Mis Citas',
     icon: Calendar,
     href: '/dashboard/patient/appointments/list',
-    requiredPermissions: ['Appointment:Read'] 
+    requiredPermissions: ['Appointment:Read']
   },
   {
     id: 'patient-medical-history',
@@ -120,8 +119,10 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Crear cita', href: '/dashboard/admin/appointments/create', requiredPermissions: ['Appointment:Create'] },
     ],
   },
-  { id: 'admin-clinical-encounters', label: 'Actualizar Encuentros Clínicos', 
-    href: '/dashboard/admin/clinical-encounters/update', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Update']},
+  {
+    id: 'admin-clinical-encounters', label: 'Actualizar Encuentros Clínicos',
+    href: '/dashboard/admin/clinical-encounters/update', icon: Stethoscope, requiredPermissions: ['ClinicalEncounter:Update']
+  },
   { id: 'admin-rag-documents', label: 'Base RAG', href: '/dashboard/admin/rag-documents', icon: FileText, requiredPermissions: ['RagDocument:Read'] },
 ];
 
@@ -255,9 +256,8 @@ export function Sidebar() {
                     type="button"
                     aria-expanded={expanded}
                     onClick={() => toggleGroup(item.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left transition-colors duration-200 ${
-                      groupActive ? 'bg-blue-50 font-semibold text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left transition-colors duration-200 ${groupActive ? 'bg-blue-50 font-semibold text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     <span className="text-sm">{item.label}</span>
@@ -275,9 +275,8 @@ export function Sidebar() {
                               key={child.href}
                               href={child.href}
                               onClick={() => setIsOpen(false)}
-                              className={`flex items-center rounded-md px-3 py-2 text-sm transition-colors duration-200 ${
-                                childActive ? 'font-medium text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                              }`}
+                              className={`flex items-center rounded-md px-3 py-2 text-sm transition-colors duration-200 ${childActive ? 'font-medium text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                }`}
                             >
                               <span>{child.label}</span>
                               {childActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />}
@@ -298,9 +297,8 @@ export function Sidebar() {
                 key={item.id}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-4 py-2.5 transition-colors duration-200 ${
-                  active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-4 py-2.5 transition-colors duration-200 ${active ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
                 <span className="text-sm">{item.label}</span>
